@@ -1,0 +1,16 @@
+# Normalizar line endings para LF no repositório
+* text=auto eol=lf
+
+# Scripts shell e Makefile: sempre LF (executados dentro do Docker/Linux)
+*.sh text eol=lf
+Makefile text eol=lf
+
+# Binários: sem conversão
+*.png binary
+*.svg binary
+*.jpg binary
+*.pdf binary
+*.zip binary
+
+# Chaves e artefatos ZoKrates: sem conversão
+circuits/proving_key/** binary

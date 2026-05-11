@@ -1,0 +1,54 @@
+# Dependências
+node_modules/
+dist/
+
+# Hardhat
+cache/
+artifacts/
+typechain-types/
+
+# ZoKrates — gerados localmente, não versionados
+circuits/proving_key/
+circuits/out
+circuits/out.r1cs
+circuits/abi.json
+circuits/verification.key
+circuits/*.wtns
+
+# Verifier gerado — versionado somente após setup
+# contracts/Verifier.sol
+
+# Deployments com dados de rede local
+deployments/besu-local.json
+
+# Cobertura
+coverage/
+coverage.json
+
+# Gas reporter
+benchmark/results/gas-report.txt
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Besu — dados de nó (volumes Docker)
+besu-network/data/
+
+# Logs
+*.log
+logs/
+
+# Claude Code (configuração local)
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

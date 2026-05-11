@@ -1,0 +1,17 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "compiler-version": ["error", "^0.8.20"],
+    "avoid-suicide": "error",
+    "avoid-sha3": "error",
+    "no-unused-vars": "error",
+    "func-visibility": ["warn", { "ignoreConstructors": true }],
+    "not-rely-on-time": "warn",
+    "reentrancy": "error",
+    "avoid-call-value": "error",
+    "mark-callable-contracts": "off",
+    "max-line-length": ["warn", 120],
+    "reason-string": ["warn", { "maxLength": 64 }],
+    "named-parameters-mapping": "warn"
+  }
+}
