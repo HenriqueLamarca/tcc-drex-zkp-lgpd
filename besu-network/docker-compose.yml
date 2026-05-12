@@ -1,0 +1,89 @@
+# Rede Hyperledger Besu QBFT — 4 validadores permissionados.
+# Alinhamento DREX: QBFT é o consenso recomendado pelo BCB para o piloto.
+# Versão fixada para reprodutibilidade (RNF04).
+
+x-besu-image: &besu-image
+  image: hyperledger/besu:24.10.0
+
+x-besu-validator: &besu-validator
+  <<: *besu-image
+  restart: unless-stopped
+  depends_on:
+    besu-init:
+      condition: service_completed_successfully
+  entrypoint: ["/bin/sh", "/start-node.sh"]
+  networks:
+    - besu-net
+  volumes:
+    - ./start-node.sh:/start-node.sh:ro
+    - ./networkFiles:/networkFiles:ro
+
+services:
+  # ─── Inicialização ────────────────────────────────────────────────────────
+  besu-init:
+    <<: *besu-image
+    user: root
+    entrypoint: ["/bin/sh", "/init.sh"]
+    volumes:
+      - ./qbftConfigFile.json:/qbftConfigFile.json:ro
+      - ./init.sh:/init.sh:ro
+      - ./networkFiles:/networkFiles
+    networks:
+      - besu-net
+
+  # ─── Validadores QBFT ─────────────────────────────────────────────────────
+  node-1:
+    <<: *besu-validator
+    container_name: besu-node-1
+    command: ["node-1"]
+    ports:
+      - "8545:8545"
+      - "30303:30303"
+    volumes:
+      - ./start-node.sh:/start-node.sh:ro
+      - ./networkFiles:/networkFiles:ro
+      - node-1-data:/data
+
+  node-2:
+    <<: *besu-validator
+    container_name: besu-node-2
+    command: ["node-2"]
+    ports:
+      - "8546:8545"
+    volumes:
+      - ./start-node.sh:/start-node.sh:ro
+      - ./networkFiles:/networkFiles:ro
+      - node-2-data:/data
+
+  node-3:
+    <<: *besu-validator
+    container_name: besu-node-3
+    command: ["node-3"]
+    ports:
+      - "8547:8545"
+    volumes:
+      - ./start-node.sh:/start-node.sh:ro
+      - ./networkFiles:/networkFiles:ro
+      - node-3-data:/data
+
+  node-4:
+    <<: *besu-validator
+    container_name: besu-node-4
+    command: ["node-4"]
+    ports:
+      - "8548:8545"
+    volumes:
+      - ./start-node.sh:/start-node.sh:ro
+      - ./networkFiles:/networkFiles:ro
+      - node-4-data:/data
+
+networks:
+  besu-net:
+    driver: bridge
+    name: besu-net
+
+volumes:
+  node-1-data:
+  node-2-data:
+  node-3-data:
+  node-4-data:

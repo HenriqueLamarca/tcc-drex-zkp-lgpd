@@ -33,7 +33,8 @@ benchmark/results/gas-report.txt
 .env.*
 !.env.example
 
-# Besu — dados de nó (volumes Docker)
+# Besu — chaves de validador, genesis e dados gerados
+besu-network/networkFiles/
 besu-network/data/
 
 # Logs
