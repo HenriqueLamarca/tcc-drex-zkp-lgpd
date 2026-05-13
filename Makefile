@@ -29,6 +29,10 @@ zkp\:setup:
 	@echo "[zkp] Executando compile + setup + export-verifier..."
 	bash scripts/01_setup_zkp.sh
 
+zkp\:test:
+	@echo "[zkp] Executando smoke test off-chain..."
+	bash scripts/02_test_zkp.sh
+
 # ─── Contratos ────────────────────────────────────────────────────────────────
 
 compile:
@@ -95,6 +99,7 @@ help:
 	@echo "  make besu:down      Derruba rede Besu"
 	@echo "  make besu:reset     Reseta rede e volumes"
 	@echo "  make zkp:setup      Compila circuito + trusted setup + exporta Verifier.sol"
+	@echo "  make zkp:test       Smoke test off-chain (prova válida + inválida + V=0)"
 	@echo "  make compile        Compila contratos Solidity"
 	@echo "  make deploy         Deploya contratos na rede Besu"
 	@echo "  make deploy:local   Deploya contratos na Hardhat Network"

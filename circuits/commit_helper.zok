@@ -1,0 +1,15 @@
+// commit_helper.zok
+// =============================================================================
+// Helper circuit usado APENAS para smoke test e geracao de fixtures de teste.
+// Calcula commit(value, randomness) = Poseidon([value, randomness]) e retorna
+// o resultado como output do witness.
+//
+// NAO faz parte do circuito de producao. Utilizado por scripts/02_test_zkp.sh
+// para precomputar commitments compativeis com solvency_dvp.zok.
+// =============================================================================
+
+import "hashes/poseidon/poseidon" as poseidon;
+
+def main(field value, field randomness) -> field {
+    return poseidon([value, randomness]);
+}
