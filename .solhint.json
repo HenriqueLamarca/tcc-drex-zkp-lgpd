@@ -9,9 +9,10 @@
     "not-rely-on-time": "warn",
     "reentrancy": "error",
     "avoid-call-value": "error",
-    "mark-callable-contracts": "off",
     "max-line-length": ["warn", 120],
     "reason-string": ["warn", { "maxLength": 64 }],
-    "named-parameters-mapping": "warn"
+    "named-parameters-mapping": "warn",
+    "immutable-vars-naming": "off",
+    "gas-custom-errors": "off"
   }
 }

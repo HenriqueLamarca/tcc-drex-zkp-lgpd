@@ -17,7 +17,7 @@
     "dvp:demo": "hardhat run scripts/03_run_dvp_demo.ts --network besu",
     "dvp:demo:local": "hardhat run scripts/03_run_dvp_demo.ts --network hardhat",
     "benchmark": "hardhat run benchmark/benchmark.ts --network hardhat",
-    "lint:sol": "solhint 'contracts/**/*.sol'",
+    "lint:sol": "solhint contracts/**/*.sol",
     "lint:ts": "eslint 'scripts/**/*.ts' 'test/**/*.ts' 'benchmark/**/*.ts' 'hardhat.config.ts'",
     "lint": "npm run lint:sol && npm run lint:ts",
     "typecheck": "tsc --noEmit",
