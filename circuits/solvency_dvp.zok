@@ -1,0 +1,98 @@
+// solvency_dvp.zok
+// =============================================================================
+// Circuito ZK para Delivery-vs-Payment (DvP) com privacidade no DREX.
+// Prova que A transfere valor V para B preservando conservacao e solvencia,
+// sem revelar saldos nem valor transferido (LGPD art. 6º, III e XI).
+//
+// Modelo de commitment: commit(v, r) = Poseidon([v, r])
+//   - hiding: r aleatorio impede brute-force do valor v
+//   - binding: Poseidon e' resistente a colisoes (estado prime field BN128)
+//
+// Escolha de Poseidon documentada em docs/ADR/0004-pedersen-vs-hash-commitment.md
+// Esquema: Groth16 (zk-SNARK) sobre curva BN128 (alt_bn128 EVM precompiled).
+// Setup: trusted setup local — limitacoes em docs/ADR/0003-trusted-setup-handling.md
+//
+// Saldos sao tratados como field, com semantica de inteiros nao-negativos.
+// Range check via comparacao de field (ZoKrates aplica LT seguro para valores
+// abaixo de field_modulus/2 ~ 2^253, com folga sobre o limite pratico de 2^64).
+// =============================================================================
+
+import "hashes/poseidon/poseidon" as poseidon;
+
+// -----------------------------------------------------------------------------
+// commit(value, randomness): commitment binding+hiding via Poseidon.
+// Norma algoritmica para LGPD art. 6º, III (necessidade) — apenas o titular
+// que conhece (value, randomness) pode abrir o commitment.
+// -----------------------------------------------------------------------------
+def commit(field value, field randomness) -> field {
+    return poseidon([value, randomness]);
+}
+
+// -----------------------------------------------------------------------------
+// main: predicado de transferencia DvP.
+//
+// Public inputs (visiveis on-chain):
+//   commit_A_old, commit_B_old : commitments dos saldos antes
+//   commit_A_new, commit_B_new : commitments dos saldos depois
+//
+// Private inputs (witness, nunca revelados):
+//   S_A, S_B : saldos de A e B (em unidades minimas do token privado)
+//   V        : valor transferido
+//   r_*_old, r_*_new : randomness dos commitments
+// -----------------------------------------------------------------------------
+def main(
+    field commit_A_old,
+    field commit_B_old,
+    field commit_A_new,
+    field commit_B_new,
+    private field S_A,
+    private field S_B,
+    private field V,
+    private field r_A_old,
+    private field r_B_old,
+    private field r_A_new,
+    private field r_B_new
+) {
+    // -------------------------------------------------------------------------
+    // 1) Abertura dos commitments antigos.
+    //    Prova que A e B conhecem os saldos comprometidos previamente on-chain.
+    //    LGPD art. 6º, VI (transparencia) — controlador pode validar consistencia
+    //    sem acesso aos valores.
+    // -------------------------------------------------------------------------
+    assert(commit(S_A, r_A_old) == commit_A_old);
+    assert(commit(S_B, r_B_old) == commit_B_old);
+
+    // -------------------------------------------------------------------------
+    // 2) Transferencia nao-trivial: V > 0.
+    //    LGPD art. 6º, III (necessidade) — operacao com proposito definido.
+    //    Field comparison segura: V < field_modulus/2 esperado.
+    // -------------------------------------------------------------------------
+    assert(V != 0);
+
+    // -------------------------------------------------------------------------
+    // 3) Solvencia: S_A >= V (predicado central do DvP).
+    //    Burgos & Alchieri (2025) — pagamento aceito so se pagador detem saldo.
+    //    LGPD art. 6º, III (necessidade).
+    //    Esta restricao tambem impede underflow modular em S_A - V.
+    // -------------------------------------------------------------------------
+    assert(S_A >= V);
+
+    // -------------------------------------------------------------------------
+    // 4) Conservacao de valor: novos saldos sao atualizacoes corretas.
+    //    Garantia de integridade contabil sem revelar plaintext.
+    //    LGPD art. 6º, V (qualidade dos dados) + art. 6º, VII (seguranca).
+    // -------------------------------------------------------------------------
+    field S_A_new = S_A - V;
+    field S_B_new = S_B + V;
+
+    // -------------------------------------------------------------------------
+    // 5) Abertura dos commitments novos.
+    //    A e B se comprometem com os novos saldos e randomness, sem reveal.
+    //    LGPD art. 5º, XI (anonimizacao) — saldo so e' recuperavel por quem
+    //    detem (valor, randomness); regulador via canal ECIES separado.
+    // -------------------------------------------------------------------------
+    assert(commit(S_A_new, r_A_new) == commit_A_new);
+    assert(commit(S_B_new, r_B_new) == commit_B_new);
+
+    return;
+}

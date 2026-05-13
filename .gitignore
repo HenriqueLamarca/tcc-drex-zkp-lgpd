@@ -44,6 +44,16 @@ logs/
 # Claude Code (configuração local)
 .claude/
 
+# Script de commit agendado (privado ao usuário)
+.git-commit-pendente-*.ps1
+.git-commit-m3-*.ps1
+.git-commit-m4-*.ps1
+
+# Artefatos ZoKrates escapados na raiz (defesa em profundidade)
+/out.r1cs
+/out.wtns
+/witness
+
 # OS
 .DS_Store
 Thumbs.db
