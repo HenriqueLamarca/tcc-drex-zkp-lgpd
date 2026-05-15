@@ -1,0 +1,313 @@
+# Guia de Reprodução — PoC DREX-ZKP-LGPD
+
+> Reproduza a PoC inteira em **menos de 10 minutos** a partir de um clone limpo, atendendo ao RNF04 (build reprodutível).
+
+---
+
+## 1. Pré-requisitos
+
+| Ferramenta | Versão | Verificar | Notas |
+|---|---|---|---|
+| **Docker** | ≥ 24.x | `docker --version` | Docker Desktop no Windows/macOS, Docker Engine no Linux |
+| **Docker Compose** | v2.x | `docker compose version` | Já incluído no Docker Desktop |
+| **Node.js** | ≥ 20 LTS | `node --version` | Validado com v20.x e v24.x |
+| **npm** | ≥ 10 | `npm --version` | Acompanha o Node |
+| **Git** | ≥ 2.x | `git --version` | — |
+| **Bash** | qualquer | `bash --version` | No Windows: vem com Git for Windows (Git Bash) |
+
+> **Rust e ZoKrates CLI NÃO são necessários.** Toda a parte de ZoKrates roda via container Docker oficial `zokrates/zokrates:0.8.8`.
+
+### Recursos mínimos da máquina
+
+- **RAM:** 8 GB (mínimo) / 16 GB (recomendado para QBFT 4 nós)
+- **Disco:** ~3 GB livres
+- **CPU:** 2 cores (proof generation é single-thread)
+
+### Máquina de referência (validada)
+
+```
+CPU:    12th Gen Intel(R) Core(TM) i5-12500H
+RAM:    32 GB
+OS:     Windows 11 Home
+Docker: 27.3.1
+Node:   v24.15.0
+```
+
+---
+
+## 2. Reprodução completa (`make all`)
+
+```bash
+git clone https://github.com/HenriqueLamarca/tcc-drex-zkp-lgpd.git
+cd tcc-drex-zkp-lgpd
+npm ci                # ~2 min
+make all              # ~5 min
+```
+
+`make all` executa em sequência:
+
+```
+besu:up   →   zkp:setup   →   deploy   →   demo   →   benchmark
+   ↓             ↓               ↓           ↓           ↓
+ Sobe 4      Compila +      Deploya 4   Executa     Mede tempo,
+ nós Besu    setup +        contratos   cenário     gas, prova
+ (~30s)      Verifier.sol   na Besu     E2E         e gera CSV
+             (~10s)         (~20s)      (~5s)       (~30s)
+```
+
+Saída esperada ao final: `benchmark/results/results.csv` populado.
+
+---
+
+## 3. Reprodução por etapas (com explicação)
+
+Para entender o que cada passo faz e/ou debugar problemas:
+
+### Etapa 1 — Subir a rede Besu QBFT
+
+```bash
+make besu:up
+```
+
+Sobe 4 validadores em containers Docker (`besu-network/docker-compose.yml`). A primeira execução roda o `besu-init` que:
+
+1. Gera 4 chaves de validador via `besu operator generate-blockchain-config`
+2. Cria `besu-network/networkFiles/genesis.json` com extraData QBFT
+3. Calcula `bootnodes.txt` para descoberta P2P interna
+
+Execuções subsequentes pulam a inicialização (idempotente).
+
+**Validar:**
+```bash
+bash besu-network/wait-for-besu.sh
+# Esperado: "Rede pronta — todos os 4 nos minerando"
+```
+
+### Etapa 2 — Compilar circuito ZK + trusted setup
+
+```bash
+make zkp:setup
+```
+
+Roda `scripts/01_setup_zkp.sh`, que via container ZoKrates 0.8.8:
+
+1. Compila `circuits/solvency_dvp.zok` → `circuits/proving_key/out` (1.728 constraints)
+2. Executa trusted setup Groth16 → `proving.key` + `verification.key`
+3. Exporta `contracts/Verifier.sol` com a verification key embutida
+
+> **Aviso:** o trusted setup é **local** — adequado para PoC, **inseguro para produção**. Detalhes em [ADR-0003](ADR/0003-trusted-setup-handling.md).
+
+**Smoke test do circuito (opcional):**
+```bash
+make zkp:test
+# 3 cenários: T1 valid, T2 saldo insuficiente, T3 V=0
+# Esperado: "Smoke test COMPLETO — 3/3 cenarios passaram"
+```
+
+### Etapa 3 — Compilar contratos Solidity
+
+```bash
+npm run compile
+```
+
+Compila 4 contratos com `viaIR: true` (necessário pelo tamanho do `executeDvP`):
+- `Verifier.sol` (gerado pelo ZoKrates)
+- `PrivateToken.sol`
+- `RegulatorViewer.sol`
+- `DvPSettlement.sol`
+
+### Etapa 4 — Deploy
+
+```bash
+# Para a rede Besu (precisa estar rodando):
+export BESU_PRIVATE_KEYS="0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63,0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3,0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f,0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97"
+make deploy
+
+# Ou para um nó Hardhat local:
+npx hardhat node &        # em outro terminal
+make deploy:local
+```
+
+Saída: `deployments/<network>.json` com endereços dos 4 contratos.
+
+### Etapa 5 — Cenário DvP ponta-a-ponta
+
+```bash
+make demo            # contra rede Besu
+# ou
+make demo:local      # contra Hardhat node
+```
+
+Executa o cenário T1: Alice (S_A=100) transfere V=30 para Bob (S_B=50). Saída em JSON estruturado **sem nenhum saldo em plaintext** (validar com `jq`).
+
+### Etapa 6 — Benchmark
+
+```bash
+npm run benchmark
+```
+
+Mede tempo de geração de prova (5 iterações, mediana), gas de verificação on-chain, gas total do `executeDvP`, e tamanho da prova. Salva em `benchmark/results/results.csv`.
+
+**Resultados esperados** (ordem de grandeza):
+- Constraints: ~1.700
+- Tempo total off-chain (witness + proof): **< 5s** (RNF01: < 30s)
+- Verify gas: **~260k** (RNF02: < 300k)
+- Prova: 256 bytes
+- executeDvP completo: ~500k gas
+
+---
+
+## 4. Suite de testes
+
+### Testes unitários + cobertura
+
+```bash
+npm test                         # 37 testes (PrivateToken + RegulatorViewer + DvPSettlement)
+npm run coverage                 # cobertura ≥ 80% em todos
+```
+
+Cobertura esperada (sem contar `Verifier.sol` auto-gerado):
+
+```
+PrivateToken.sol      100% statements / 100% branch / 100% func / 100% lines
+RegulatorViewer.sol   100% statements / 100% branch / 100% func / 100% lines
+DvPSettlement.sol     100% statements /  77.78% branch / 100% func / 100% lines
+```
+
+### Teste de integração
+
+```bash
+npx hardhat test test/integration/dvp.spec.ts
+# 6 cenários ponta-a-ponta in-process (sem Besu)
+```
+
+---
+
+## 5. Lint e qualidade
+
+```bash
+npm run lint                     # Solidity (solhint) + TypeScript (eslint)
+npm run typecheck                # tsc --noEmit
+```
+
+Esperado: **zero warnings**.
+
+---
+
+## 6. CI (GitHub Actions)
+
+`.github/workflows/ci.yml` executa em cada push/PR:
+
+```
+checkout  →  npm ci  →  lint  →  typecheck  →  compile  →  test  →  coverage
+```
+
+Cobertura mínima exigida: **80%** (RNF03). Falha o build se < 80%.
+
+> **Limitação:** o CI **não** executa o setup ZoKrates (sem Docker no GitHub Actions runner padrão). O `Verifier.sol` versionado no repo é usado como artefato. Para regenerar, executar `make zkp:setup` localmente.
+
+---
+
+## 7. Limpeza
+
+### Derrubar a rede Besu
+
+```bash
+make besu:down                   # preserva chaves + blockchain
+make besu:reset                  # apaga volumes (forca re-init na proxima)
+```
+
+### Limpar artefatos de build
+
+```bash
+rm -rf node_modules cache artifacts typechain-types coverage
+rm -rf besu-network/networkFiles
+rm -rf circuits/proving_key/{out,proving.key,verification.key,abi.json,proof.json,witness}
+```
+
+---
+
+## 8. Solução de problemas
+
+### "Docker is not running"
+
+Inicie o Docker Desktop (Windows/macOS) ou `sudo systemctl start docker` (Linux).
+
+### Setup ZoKrates falha com "image not found"
+
+```bash
+docker pull zokrates/zokrates:0.8.8
+```
+
+### Hardhat compile com "Stack too deep"
+
+`viaIR: true` já está habilitado em `hardhat.config.ts`. Se você desabilitou, reabilite.
+
+### Besu não responde após `besu:up`
+
+Aguarde até 60s (consenso QBFT precisa estabelecer quórum). Se persistir:
+
+```bash
+make besu:reset
+make besu:up
+```
+
+### Demo falha com "CommitmentMismatch"
+
+A rede Besu tem state persistente. Se você re-roda o demo após mudanças, faça:
+
+```bash
+make besu:reset
+make besu:up
+make zkp:setup           # se Verifier.sol mudou, precisa re-deploy
+make deploy
+make demo
+```
+
+### Benchmark em Linux/macOS difere muito da máquina de referência
+
+Esperado — performance varia com CPU. Os RNFs (< 30s, < 300k gas) têm folga ampla. Documente sua máquina de referência no cabeçalho do CSV gerado.
+
+---
+
+## 9. Notas importantes sobre o trusted setup
+
+A cada execução de `make zkp:setup`, **uma nova CRS é gerada**. Isso significa:
+
+- `Verifier.sol` muda (a verification key embutida muda)
+- Provas geradas com a CRS antiga **não verificam** com o novo Verifier
+- Se você commitou o `Verifier.sol` antes do setup, **redeploy é necessário** após cada `make zkp:setup`
+
+**Recomendação:** rode `make zkp:setup` apenas quando o circuito `solvency_dvp.zok` mudar. Para uso normal, mantenha o `Verifier.sol` commitado e pule a Etapa 2.
+
+Em produção (DREX), a CRS resultaria de uma **cerimônia MPC pública** (ADR-0003) e seria considerada um artefato imutável durante a vida útil do circuito.
+
+---
+
+## 10. Checklist de validação rápida
+
+Após `make all`, verifique:
+
+- [ ] 4 containers Besu rodando (`docker ps | grep besu`)
+- [ ] `circuits/proving_key/verification.key` existe
+- [ ] `contracts/Verifier.sol` existe
+- [ ] `deployments/besu.json` existe e contém 4 endereços
+- [ ] `benchmark/results/results.csv` existe
+- [ ] CSV contém 4 linhas de operação + cabeçalho com specs
+- [ ] `npm test` retorna 37 passing
+- [ ] `npm run coverage` mostra ≥ 80%
+- [ ] `npm run lint` sem warnings
+
+Se todos os 9 itens estão verdes, a PoC está reproduzida com sucesso.
+
+---
+
+## Referências cruzadas
+
+- [`README.md`](../README.md) — visão geral
+- [`PLAN.md`](../PLAN.md) — divisão em marcos M1–M7
+- [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) — diagrama e descrição (M7)
+- [`docs/THEORY_CODE_IS_LAW.md`](THEORY_CODE_IS_LAW.md) — fundamentação Cryptolaw (M7)
+- [`docs/THREAT_MODEL.md`](THREAT_MODEL.md) — STRIDE
+- [`docs/LGPD_COMPLIANCE.md`](LGPD_COMPLIANCE.md) — matriz LGPD
+- [`docs/ADR/`](ADR/) — registros de decisões arquiteturais (0001–0005)
