@@ -27,14 +27,14 @@ jobs:
       - name: Lint Solidity
         run: npm run lint:sol
 
+      - name: Compilar contratos
+        run: npm run compile
+
       - name: Lint TypeScript
         run: npm run lint:ts
 
       - name: Typecheck
         run: npm run typecheck
-
-      - name: Compilar contratos
-        run: npm run compile
 
       - name: Executar testes (Hardhat Network)
         run: npm test

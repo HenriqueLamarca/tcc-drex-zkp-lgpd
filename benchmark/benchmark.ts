@@ -107,13 +107,17 @@ function computeWitnessAndProof(): { witnessMs: number; proofMs: number } {
   );
   const proofMs = Date.now() - proofStart;
 
-  // Cleanup
+  // Cleanup (ignora se o arquivo nao existir)
   try {
     fs.unlinkSync(witnessPath);
-  } catch {}
+  } catch {
+    /* arquivo ja removido — ok */
+  }
   try {
     fs.unlinkSync(proofPath);
-  } catch {}
+  } catch {
+    /* arquivo ja removido — ok */
+  }
 
   return { witnessMs, proofMs };
 }
@@ -129,8 +133,6 @@ function proofSizeBytes(): number {
   //   G1 = (X, Y) sobre Fp = 2 * 32 bytes = 64 bytes
   //   G2 = (X, Y) sobre Fp2 = 4 * 32 bytes = 128 bytes
   // Total = 64 + 128 + 64 = 256 bytes
-  // Validamos via tamanho real do JSON de proof na fixture.
-  const fixture = loadValidFixture();
   let bytes = 0;
   bytes += 2 * 32; // a
   bytes += 4 * 32; // b

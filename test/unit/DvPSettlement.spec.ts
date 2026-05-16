@@ -40,13 +40,12 @@ describe("DvPSettlement", () => {
   let regulator: HardhatEthersSigner;
   let alice: HardhatEthersSigner; // Pagador (from)
   let bob: HardhatEthersSigner; // Recebedor (to)
-  let outsider: HardhatEthersSigner;
 
   const fixture = loadValidFixture();
   const ciphertext = mockCiphertext("dvp-test");
 
   beforeEach(async () => {
-    [admin, regulator, alice, bob, outsider] = await ethers.getSigners();
+    [admin, regulator, alice, bob] = await ethers.getSigners();
 
     const verifierFactory = await ethers.getContractFactory("Verifier");
     verifier = (await verifierFactory.deploy()) as unknown as Verifier;

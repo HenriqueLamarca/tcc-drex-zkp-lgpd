@@ -28,6 +28,11 @@ import { ethers, network } from "hardhat";
 import fs from "fs";
 import path from "path";
 import {
+  PrivateToken,
+  RegulatorViewer,
+  DvPSettlement,
+} from "../typechain-types";
+import {
   loadValidFixture,
   uintToBytes32,
   mockCiphertext,
@@ -76,18 +81,18 @@ async function main(): Promise<void> {
   });
 
   // ─── Conecta nos contratos ─────────────────────────────────────────────────
-  const token = await ethers.getContractAt(
+  const token = (await ethers.getContractAt(
     "PrivateToken",
     deployment.contracts.PrivateToken
-  );
-  const viewer = await ethers.getContractAt(
+  )) as unknown as PrivateToken;
+  const viewer = (await ethers.getContractAt(
     "RegulatorViewer",
     deployment.contracts.RegulatorViewer
-  );
-  const dvp = await ethers.getContractAt(
+  )) as unknown as RegulatorViewer;
+  const dvp = (await ethers.getContractAt(
     "DvPSettlement",
     deployment.contracts.DvPSettlement
-  );
+  )) as unknown as DvPSettlement;
 
   // ─── Carrega fixture de prova (gerada off-chain) ───────────────────────────
   const fixture = loadValidFixture();

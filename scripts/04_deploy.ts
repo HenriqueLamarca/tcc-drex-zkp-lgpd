@@ -20,6 +20,12 @@
 import { ethers, network } from "hardhat";
 import fs from "fs";
 import path from "path";
+import {
+  Verifier,
+  PrivateToken,
+  RegulatorViewer,
+  DvPSettlement,
+} from "../typechain-types";
 
 interface DeploymentRecord {
   network: string;
@@ -49,33 +55,38 @@ async function main(): Promise<void> {
 
   // ─── 1. Verifier ───────────────────────────────────────────────────────────
   const VerifierFactory = await ethers.getContractFactory("Verifier");
-  const verifier = await VerifierFactory.deploy();
+  const verifier = (await VerifierFactory.deploy()) as unknown as Verifier;
   await verifier.waitForDeployment();
   const verifierAddr = await verifier.getAddress();
   log({ event: "deployed", contract: "Verifier", address: verifierAddr });
 
   // ─── 2. PrivateToken ───────────────────────────────────────────────────────
   const TokenFactory = await ethers.getContractFactory("PrivateToken");
-  const token = await TokenFactory.deploy(admin.address);
+  const token = (await TokenFactory.deploy(
+    admin.address
+  )) as unknown as PrivateToken;
   await token.waitForDeployment();
   const tokenAddr = await token.getAddress();
   log({ event: "deployed", contract: "PrivateToken", address: tokenAddr });
 
   // ─── 3. RegulatorViewer ────────────────────────────────────────────────────
   const ViewerFactory = await ethers.getContractFactory("RegulatorViewer");
-  const viewer = await ViewerFactory.deploy(admin.address, regulator.address);
+  const viewer = (await ViewerFactory.deploy(
+    admin.address,
+    regulator.address
+  )) as unknown as RegulatorViewer;
   await viewer.waitForDeployment();
   const viewerAddr = await viewer.getAddress();
   log({ event: "deployed", contract: "RegulatorViewer", address: viewerAddr });
 
   // ─── 4. DvPSettlement ──────────────────────────────────────────────────────
   const DvPFactory = await ethers.getContractFactory("DvPSettlement");
-  const dvp = await DvPFactory.deploy(
+  const dvp = (await DvPFactory.deploy(
     admin.address,
     verifierAddr,
     tokenAddr,
     viewerAddr
-  );
+  )) as unknown as DvPSettlement;
   await dvp.waitForDeployment();
   const dvpAddr = await dvp.getAddress();
   log({ event: "deployed", contract: "DvPSettlement", address: dvpAddr });
