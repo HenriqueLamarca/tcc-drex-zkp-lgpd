@@ -1,8 +1,9 @@
 # PLAN.md — PoC Privacidade por Design no DREX
 
 **TCC:** Privacidade em Sistemas Financeiros Distribuídos: Uso de Zero-Knowledge Proofs e Smart Contracts para Conformidade com a LGPD
-**Autor:** a definir | **Orientador:** Tassio Ferenzini Martins Sirqueira
+**Autor:** Henrique Lamarca | **Orientador:** Tassio Ferenzini Martins Sirqueira
 **Instituição:** UniAcademia | **Período:** 2026/1
+**Status:** ✅ **Concluído — todos os 7 marcos entregues e validados**
 
 ---
 
@@ -25,15 +26,42 @@
 | Decisão                  | Escolha       | Justificativa                                                                 |
 |--------------------------|---------------|-------------------------------------------------------------------------------|
 | Rede Besu                | QBFT 4 nós    | RAM suficiente; máxima fidelidade ao DREX real                                |
-| Commitment de saldo      | Pedersen      | Homomórfico; resolve RF04 sem expor V em calldata; suporte nativo no ZoKrates |
+| Commitment de saldo      | **Poseidon hash** (revisado em ADR-0004) | Decisão original Pedersen revisada após descoberta de imprecisão técnica; Poseidon alinhado com Burgos & Alchieri 2025 e atende RNFs com folga |
 | Viewing key do regulador | R1 — ECIES off-chain | Escopo adequado para PoC; limitação documentada em LGPD_COMPLIANCE.md  |
+| Esquema zk               | Groth16 sobre BN128 (ADR-0001) | Custo on-chain mínimo; alinhado com Eberhardt & Tai 2018 |
+| Trusted setup            | Local na PoC; MPC obrigatório em produção (ADR-0003) | Adequado para PoC acadêmica com aviso explícito |
+| Crypto-shredding         | Zerar commitment + audit trail (ADR-0005) | Mitigação parcial ao conflito imutabilidade × art. 18 VI LGPD |
 
 ---
 
-## Marcos (M1 → M7)
+## Resumo final dos marcos
+
+| Marco | Conteúdo | Status |
+|---|---|---|
+| **M1** | Esqueleto + tooling + CI | ✅ |
+| **M2** | Rede Besu QBFT (4 validadores) | ✅ |
+| **M3** | Circuito ZoKrates + Verifier (1.728 constraints) | ✅ |
+| **M4** | Contratos + 37 testes unitários (100% coverage) | ✅ |
+| **M5** | Integração ponta-a-ponta + 6 testes E2E | ✅ |
+| **M6** | Benchmark + STRIDE + matriz LGPD + reproducibility | ✅ |
+| **M7** | Cryptolaw + ARCHITECTURE + 5 SVGs + DEMO_SCRIPT | ✅ |
+
+**RNFs validados:**
+
+| RNF | Target | Medido |
+|---|---|---|
+| RNF01 — prova off-chain | < 30s | **1.93s** |
+| RNF02 — verify on-chain | < 300k gas | **264.020** |
+| RNF03 — cobertura de testes | ≥ 80% | **100% statements** |
+| RNF04 — `make all` | reproduzível | OK em < 10 min |
+| RNF06 — sem plaintext | invariante | validado programaticamente |
+
+---
+
+## Detalhamento dos marcos (M1 → M7)
 
 ### M1 — Esqueleto do repositório + tooling + CI mínima
-**Complexidade:** Baixa | **Estimativa:** 2–3h
+**Complexidade:** Baixa | **Estimativa:** 2–3h | **Status:** ✅
 **Pré-requisito:** nenhum
 
 Entregas:
