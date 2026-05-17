@@ -19,7 +19,8 @@ circuits/*.wtns
 # contracts/Verifier.sol
 
 # Deployments com dados de rede local
-deployments/besu-local.json
+# Deployments — artefatos gerados por rede (regenerados por scripts/04_deploy.ts)
+deployments/
 
 # Cobertura
 coverage/
@@ -48,6 +49,10 @@ logs/
 .git-commit-pendente-*.ps1
 .git-commit-m3-*.ps1
 .git-commit-m4-*.ps1
+.git-commit-m5-*.ps1
+.git-commit-m6-*.ps1
+.git-commit-m7-*.ps1
+.git-commit-refactor.ps1
 
 # Artefatos ZoKrates escapados na raiz (defesa em profundidade)
 /out.r1cs
