@@ -46,12 +46,16 @@ e tolerância bizantina de 1 nó (BFT(n) = ⌊(n-1)/3⌋).
 make besu:up
 ```
 
-Equivalente direto:
+Equivalente direto (Linux/macOS):
 
 ```bash
 docker compose -f besu-network/docker-compose.yml up -d
 bash besu-network/wait-for-besu.sh
 ```
+
+> **Windows:** use o Git Bash explícito para o script `.sh` (o `bash` do
+> PowerShell pode invocar o WSL):
+> `& "C:\Program Files\Git\bin\bash.exe" besu-network/wait-for-besu.sh`
 
 A primeira execução roda o service `besu-init`, que gera `networkFiles/`
 (genesis, chaves dos 4 validadores, lista de bootnodes). Demora ~30–60s.
@@ -78,7 +82,10 @@ docker compose -f besu-network/docker-compose.yml logs -f node-1
 ### Verificar saúde
 
 ```bash
+# Linux/macOS
 bash besu-network/wait-for-besu.sh
+# Windows (Git Bash explícito — evita o WSL)
+# & "C:\Program Files\Git\bin\bash.exe" besu-network/wait-for-besu.sh
 ```
 
 Saída esperada:

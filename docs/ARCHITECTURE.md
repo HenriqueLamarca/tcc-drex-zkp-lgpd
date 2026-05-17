@@ -206,7 +206,7 @@ Detalhes em [`docs/THREAT_MODEL.md`](THREAT_MODEL.md) (categoria S2 — Spoofing
 |---|---|---|---|
 | **RNF01** | Geração de prova < 30s | **~2s** (15× melhor) | `benchmark/results/results.csv` |
 | **RNF02** | Gas verifyTx < 300.000 | **264.020** (12% folga) | `benchmark/results/results.csv` |
-| **RNF03** | Cobertura de testes ≥ 80% | **100% statements / 91.3% branches** | `npm run coverage` |
+| **RNF03** | Cobertura de testes ≥ 80% | **100% statements/functions/lines / 92% branches** | `npm run coverage` |
 | **RNF04** | Build reprodutível via `make all` | OK em < 10 min | [`docs/REPRODUCIBILITY.md`](REPRODUCIBILITY.md) |
 | **RNF05** | Determinismo do trusted setup documentado | OK | [ADR-0003](ADR/0003-trusted-setup-handling.md) |
 | **RNF06** | Logs estruturados sem expor inputs privados | OK — validação programática | `scripts/05_run_dvp_demo.ts` |
@@ -233,8 +233,8 @@ Detalhes em [`docs/THREAT_MODEL.md`](THREAT_MODEL.md) (categoria S2 — Spoofing
 │   ├── 04_deploy.ts           Deploy dos 4 contratos + concessão de papéis
 │   └── 05_run_dvp_demo.ts     Cenário ponta-a-ponta
 ├── test/
-│   ├── unit/                  Testes unitários (37/37 passing)
-│   ├── integration/           Teste E2E in-process (6/6 passing)
+│   ├── unit/                  Testes unitários (42 passing)
+│   ├── integration/           Testes E2E in-process (8 passing)
 │   └── fixtures/              Helpers + fixtures de prova
 ├── benchmark/
 │   ├── benchmark.ts           Mede tempo, gas, tamanho

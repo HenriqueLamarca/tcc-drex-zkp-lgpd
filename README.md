@@ -33,7 +33,7 @@ Todos os requisitos não-funcionais foram **validados com folga**:
 
 **Estatísticas do circuito:** 1.728 constraints, 256 bytes de prova, 4 public inputs.
 
-**Estatísticas dos contratos:** 4 contratos, 37 testes unitários + 6 de integração — todos passando — cobertura 100% statements, 91.3% branches.
+**Estatísticas dos contratos:** 4 contratos, 50 testes (42 unitários + 8 de integração) — todos passando — cobertura 100% statements/functions/lines, 92% branches.
 
 ---
 
@@ -76,7 +76,7 @@ Detalhes em [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) (10 seções, c
 | `make zkp:setup` | Compila circuito + trusted setup + gera Verifier.sol |
 | `make zkp:test` | Smoke test off-chain do circuito (3 cenários) |
 | `npm run compile` | Compila contratos Solidity |
-| `npm test` | 37 testes unitários + 6 de integração |
+| `npm test` | 50 testes (42 unitários + 8 de integração) |
 | `npm run coverage` | Cobertura (mínimo 80%) |
 | `npm run lint` | Solidity (solhint) + TypeScript (eslint) |
 | `make deploy` | Deploy na rede Besu (precisa estar rodando) |
@@ -131,8 +131,8 @@ Regenerar: `npx ts-node docs/figures/generate_svgs.ts`
 ├── contracts/                 PrivateToken, DvPSettlement, RegulatorViewer, Verifier
 ├── scripts/                   01_setup_zkp, 02_test_zkp, 03_fixtures, 04_deploy, 05_demo
 ├── test/
-│   ├── unit/                  37 testes unitários
-│   ├── integration/           6 testes E2E in-process
+│   ├── unit/                  42 testes unitários
+│   ├── integration/           8 testes E2E in-process
 │   └── fixtures/              Helpers + proof fixtures
 ├── benchmark/                 Script + results.csv
 ├── besu-network/              Hyperledger Besu QBFT (4 nós) via docker-compose

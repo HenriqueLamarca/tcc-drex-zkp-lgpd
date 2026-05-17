@@ -50,7 +50,7 @@ Adotar **Groth16** (Jens Groth, 2016) como esquema de prova zk-SNARK, sobre a cu
 
 ### 1. Custo on-chain mínimo (RNF02 atendido com folga)
 
-A verificação Groth16 reduz-se a **uma única operação de pareamento bilinear** sobre alt_bn128 (precompiled `0x08` na EVM). Mais as operações `0x06` (ECADD) e `0x07` (ECMUL). Custo total medido: **~250.000 gas**, que está abaixo do limite RNF02 (< 300.000) com 17% de margem.
+A verificação Groth16 reduz-se a **uma única operação de pareamento bilinear** sobre alt_bn128 (precompiled `0x08` na EVM). Mais as operações `0x06` (ECADD) e `0x07` (ECMUL). Custo medido no benchmark (`benchmark/results/results.csv`): **264.020 gas** para o `verifyTx`, abaixo do limite RNF02 (< 300.000) com ~12% de margem.
 
 PLONK, embora mais flexível, exige verificação O(log n) e tipicamente consome 400k–600k gas — fora do limite.
 

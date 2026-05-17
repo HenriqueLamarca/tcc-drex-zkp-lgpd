@@ -172,23 +172,24 @@ Mede tempo de geração de prova (5 iterações, mediana), gas de verificação 
 ### Testes unitários + cobertura
 
 ```bash
-npm test                         # 37 testes (PrivateToken + RegulatorViewer + DvPSettlement)
+npm test                         # 50 testes (42 unitários + 8 de integração)
 npm run coverage                 # cobertura ≥ 80% em todos
 ```
 
 Cobertura esperada (sem contar `Verifier.sol` auto-gerado):
 
 ```
-PrivateToken.sol      100% statements / 100% branch / 100% func / 100% lines
-RegulatorViewer.sol   100% statements / 100% branch / 100% func / 100% lines
+PrivateToken.sol      100% statements / 100% branch  / 100% func / 100% lines
+RegulatorViewer.sol   100% statements / 100% branch  / 100% func / 100% lines
 DvPSettlement.sol     100% statements /  77.78% branch / 100% func / 100% lines
+Total                 100% statements /  92% branch   / 100% func / 100% lines
 ```
 
 ### Teste de integração
 
 ```bash
 npx hardhat test test/integration/dvp.spec.ts
-# 6 cenários ponta-a-ponta in-process (sem Besu)
+# 8 cenários ponta-a-ponta in-process (sem Besu)
 ```
 
 ---
@@ -304,7 +305,7 @@ Após `make all`, verifique:
 - [ ] `deployments/besu.json` existe e contém 4 endereços
 - [ ] `benchmark/results/results.csv` existe
 - [ ] CSV contém 4 linhas de operação + cabeçalho com specs
-- [ ] `npm test` retorna 37 passing
+- [ ] `npm test` retorna 50 passing
 - [ ] `npm run coverage` mostra ≥ 80%
 - [ ] `npm run lint` sem warnings
 

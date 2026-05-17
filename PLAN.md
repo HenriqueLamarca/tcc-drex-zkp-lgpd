@@ -41,8 +41,8 @@
 | **M1** | Esqueleto + tooling + CI | ✅ |
 | **M2** | Rede Besu QBFT (4 validadores) | ✅ |
 | **M3** | Circuito ZoKrates + Verifier (1.728 constraints) | ✅ |
-| **M4** | Contratos + 37 testes unitários (100% coverage) | ✅ |
-| **M5** | Integração ponta-a-ponta + 6 testes E2E | ✅ |
+| **M4** | Contratos + testes unitários (100% coverage) | ✅ |
+| **M5** | Integração ponta-a-ponta + testes E2E | ✅ |
 | **M6** | Benchmark + STRIDE + matriz LGPD + reproducibility | ✅ |
 | **M7** | Cryptolaw + ARCHITECTURE + 5 SVGs + USAGE | ✅ |
 
@@ -52,7 +52,7 @@
 |---|---|---|
 | RNF01 — prova off-chain | < 30s | **1.93s** |
 | RNF02 — verify on-chain | < 300k gas | **264.020** |
-| RNF03 — cobertura de testes | ≥ 80% | **100% statements** |
+| RNF03 — cobertura de testes | ≥ 80% | **100% stmts/funcs/lines, 92% branch** |
 | RNF04 — `make all` | reproduzível | OK em < 10 min |
 | RNF06 — sem plaintext | invariante | validado programaticamente |
 
@@ -98,7 +98,7 @@ Entregas:
 Entregas:
 - `circuits/solvency_dvp.zok` — circuito Groth16/BN128 com predicado:
   `(S_A >= V) AND (V > 0) AND (S_A_novo = S_A - V) AND (S_B_novo = S_B + V)`
-  usando Pedersen commitments; cada `assert` comentado com artigo LGPD correspondente
+  usando Poseidon hash commitments (decisão revista em ADR-0004); cada `assert` comentado com artigo LGPD correspondente
 - `scripts/01_setup_zkp.sh` — wrapper Docker que executa:
   1. `zokrates compile`
   2. `zokrates setup` (Groth16, trusted setup local com aviso explícito)
@@ -117,8 +117,8 @@ Entregas:
 **Pré-requisito:** M3 concluído (`Verifier.sol` disponível)
 
 Entregas:
-- `contracts/PrivateToken.sol` — ERC-20 modificado:
-  - Storage: `mapping(address => bytes32) public commitments` (saldo como Pedersen commitment)
+- `contracts/PrivateToken.sol` — contrato custom (sem IERC20; decisão de projeto):
+  - Storage: `mapping(address => bytes32) public commitments` (saldo como Poseidon hash commitment)
   - Nunca armazena saldo em plaintext (LGPD art. 6º, III e XI)
   - Função `updateCommitment(address, bytes32)` — apenas DvPSettlement pode chamar
 - `contracts/DvPSettlement.sol`:
@@ -146,9 +146,9 @@ Entregas:
 **Pré-requisito:** M2 + M3 + M4 concluídos
 
 Entregas:
-- `scripts/02_deploy.ts` — deploya PrivateToken, RegulatorViewer, DvPSettlement na rede Besu; salva endereços em `deployments/besu-local.json`
-- `scripts/03_run_dvp_demo.ts` — cenário ponta-a-ponta:
-  1. Participante A: define saldo S_A via commitment Pedersen inicial
+- `scripts/04_deploy.ts` — deploya Verifier, PrivateToken, RegulatorViewer, DvPSettlement na rede Besu; salva endereços em `deployments/<network>.json`
+- `scripts/05_run_dvp_demo.ts` — cenário ponta-a-ponta:
+  1. Participante A: define saldo S_A via Poseidon hash commitment inicial
   2. A gera prova Groth16 off-chain (via Docker ZoKrates)
   3. A submete prova + publicInputs ao DvPSettlement
   4. Contrato verifica e atualiza commitments de A e B

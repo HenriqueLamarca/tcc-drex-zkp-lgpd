@@ -40,7 +40,7 @@ npm ci
 ```powershell
 npm test
 ```
-Esperado: `43 passing`
+Esperado: `50 passing`
 
 ### Cobertura de testes
 ```powershell
