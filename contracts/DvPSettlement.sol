@@ -30,10 +30,6 @@ import {RegulatorViewer} from "./RegulatorViewer.sol";
  *  - Art. 5º, XI (anonimizacao): nenhum valor de saldo aparece em log/event
  */
 contract DvPSettlement is AccessControl, ReentrancyGuard {
-    // ─── Papeis ─────────────────────────────────────────────────────────────
-
-    bytes32 public constant REGULATOR_ROLE = keccak256("REGULATOR_ROLE");
-
     // ─── Componentes referenciados ──────────────────────────────────────────
 
     Verifier public immutable verifier;

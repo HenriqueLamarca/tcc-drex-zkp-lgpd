@@ -10,7 +10,9 @@ import path from "path";
 
 const FIXTURES_DIR = path.join(__dirname);
 
-export interface RawZokratesProof {
+// Formato cru do proof.json emitido pelo ZoKrates. Detalhe interno —
+// nao exportado porque nenhum consumidor o usa diretamente.
+interface RawZokratesProof {
   scheme: string;
   curve: string;
   proof: {
@@ -35,7 +37,6 @@ export interface DvPFixture {
     commitANew: bigint;
     commitBNew: bigint;
   };
-  raw: RawZokratesProof;
 }
 
 /**
@@ -46,13 +47,6 @@ export function loadValidFixture(): DvPFixture {
     fs.readFileSync(path.join(FIXTURES_DIR, "valid-proof.json"), "utf-8")
   ) as RawZokratesProof;
 
-  return buildFixture(raw);
-}
-
-/**
- * Constroi um VerifierProof a partir do JSON cru do ZoKrates.
- */
-export function buildFixture(raw: RawZokratesProof): DvPFixture {
   const proof: VerifierProof = {
     a: { X: BigInt(raw.proof.a[0]), Y: BigInt(raw.proof.a[1]) },
     b: {
@@ -69,7 +63,7 @@ export function buildFixture(raw: RawZokratesProof): DvPFixture {
     commitBNew: BigInt(raw.inputs[3]),
   };
 
-  return { proof, inputs, raw };
+  return { proof, inputs };
 }
 
 /**

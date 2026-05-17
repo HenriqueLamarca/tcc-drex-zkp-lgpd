@@ -21,16 +21,15 @@ import {
   DvPSettlement,
   PrivateToken,
   RegulatorViewer,
-  Verifier,
 } from "../../typechain-types";
 import {
   loadValidFixture,
   uintToBytes32,
   mockCiphertext,
 } from "../fixtures/helpers";
+import { deployFullStack } from "../fixtures/deployStack";
 
 describe("Integration — DvP fluxo completo (mint -> dvp -> audit)", () => {
-  let verifier: Verifier;
   let token: PrivateToken;
   let viewer: RegulatorViewer;
   let dvp: DvPSettlement;
@@ -49,37 +48,14 @@ describe("Integration — DvP fluxo completo (mint -> dvp -> audit)", () => {
   const bobCommitNew = uintToBytes32(fixture.inputs.commitBNew);
 
   before(async () => {
-    [admin, regulator, alice, bob] = await ethers.getSigners();
-
-    // Deploy completo (espelha scripts/04_deploy.ts)
-    const VFactory = await ethers.getContractFactory("Verifier");
-    verifier = (await VFactory.deploy()) as unknown as Verifier;
-
-    const TFactory = await ethers.getContractFactory("PrivateToken");
-    token = (await TFactory.deploy(admin.address)) as unknown as PrivateToken;
-
-    const RFactory = await ethers.getContractFactory("RegulatorViewer");
-    viewer = (await RFactory.deploy(
-      admin.address,
-      regulator.address
-    )) as unknown as RegulatorViewer;
-
-    const DFactory = await ethers.getContractFactory("DvPSettlement");
-    dvp = (await DFactory.deploy(
-      admin.address,
-      await verifier.getAddress(),
-      await token.getAddress(),
-      await viewer.getAddress()
-    )) as unknown as DvPSettlement;
-
-    // Concessao de papeis
-    await token.connect(admin).grantRole(await token.MINTER_ROLE(), admin.address);
-    await token
-      .connect(admin)
-      .grantRole(await token.SETTLEMENT_ROLE(), await dvp.getAddress());
-    await viewer
-      .connect(admin)
-      .grantRole(await viewer.SETTLEMENT_ROLE(), await dvp.getAddress());
+    // Deploy completo (mesma sequencia de scripts/04_deploy.ts)
+    const stack = await deployFullStack();
+    token = stack.token;
+    viewer = stack.viewer;
+    dvp = stack.dvp;
+    admin = stack.admin;
+    regulator = stack.regulator;
+    [, , alice, bob] = stack.signers;
   });
 
   it("admin minta commitments iniciais para Alice e Bob", async () => {

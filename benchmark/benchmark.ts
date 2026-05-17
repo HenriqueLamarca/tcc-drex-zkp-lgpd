@@ -26,9 +26,9 @@ import {
   uintToBytes32,
   mockCiphertext,
 } from "../test/fixtures/helpers";
+import { deployFullStack } from "../test/fixtures/deployStack";
 import {
   PrivateToken,
-  RegulatorViewer,
   DvPSettlement,
   Verifier,
 } from "../typechain-types";
@@ -56,10 +56,13 @@ function runDocker(cmd: string): void {
 }
 
 function readConstraintsCount(): number {
-  // ZoKrates compile imprime "Number of constraints: N" no stdout. Vamos
-  // tentar extrair de um log conhecido. Como alternativa, contamos as linhas
-  // do arquivo r1cs nao e' confiavel; entao cacheamos o valor conhecido (1728)
-  // e validamos via re-compile se necessario.
+  // DECISAO DE DESIGN (ADR implicito): recompilamos o circuito via Docker
+  // para LER o numero de constraints do stdout do ZoKrates, em vez de usar
+  // o valor hardcoded direto. Custo: ~1 docker run (~1s). Beneficio: o
+  // benchmark valida que solvency_dvp.zok NAO mudou desde o setup — se
+  // alguem alterar o circuito sem refazer make zkp:setup, o numero aqui
+  // diverge e o CSV documenta a inconsistencia. O fallback 1728 (valor
+  // confirmado no M3) so' e' usado se o Docker estiver indisponivel.
   try {
     const output = execSync(
       `docker run --rm -v "${REPO_ROOT}:/home/zokrates/code" -w /home/zokrates/code --user root ${ZOKRATES_IMAGE} zokrates compile -i circuits/solvency_dvp.zok -o /tmp/recompile-out --abi-spec /tmp/recompile-abi.json 2>&1`,
@@ -140,44 +143,8 @@ function proofSizeBytes(): number {
   return bytes;
 }
 
-async function deployStack(): Promise<{
-  verifier: Verifier;
-  token: PrivateToken;
-  viewer: RegulatorViewer;
-  dvp: DvPSettlement;
-}> {
-  const [admin, regulator] = await ethers.getSigners();
-
-  const VFactory = await ethers.getContractFactory("Verifier");
-  const verifier = (await VFactory.deploy()) as unknown as Verifier;
-
-  const TFactory = await ethers.getContractFactory("PrivateToken");
-  const token = (await TFactory.deploy(admin.address)) as unknown as PrivateToken;
-
-  const RFactory = await ethers.getContractFactory("RegulatorViewer");
-  const viewer = (await RFactory.deploy(
-    admin.address,
-    regulator.address
-  )) as unknown as RegulatorViewer;
-
-  const DFactory = await ethers.getContractFactory("DvPSettlement");
-  const dvp = (await DFactory.deploy(
-    admin.address,
-    await verifier.getAddress(),
-    await token.getAddress(),
-    await viewer.getAddress()
-  )) as unknown as DvPSettlement;
-
-  await token.connect(admin).grantRole(await token.MINTER_ROLE(), admin.address);
-  await token
-    .connect(admin)
-    .grantRole(await token.SETTLEMENT_ROLE(), await dvp.getAddress());
-  await viewer
-    .connect(admin)
-    .grantRole(await viewer.SETTLEMENT_ROLE(), await dvp.getAddress());
-
-  return { verifier, token, viewer, dvp };
-}
+// Deploy do stack reutiliza test/fixtures/deployStack (DRY — mesma logica
+// dos testes unitarios e de integracao).
 
 async function measureVerifyTxGas(verifier: Verifier): Promise<bigint> {
   const fixture = loadValidFixture();
@@ -254,7 +221,7 @@ async function main(): Promise<void> {
 
   // ─── 4. Gas on-chain ───────────────────────────────────────────────────────
   log({ event: "step", name: "deploy_stack" });
-  const { verifier, token, dvp } = await deployStack();
+  const { verifier, token, dvp } = await deployFullStack();
 
   log({ event: "step", name: "verify_tx_gas" });
   const verifyGas = await measureVerifyTxGas(verifier);

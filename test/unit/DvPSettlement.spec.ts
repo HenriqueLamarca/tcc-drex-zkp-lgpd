@@ -29,6 +29,7 @@ import {
   uintToBytes32,
   mockCiphertext,
 } from "../fixtures/helpers";
+import { deployFullStack } from "../fixtures/deployStack";
 
 describe("DvPSettlement", () => {
   let verifier: Verifier;
@@ -37,7 +38,6 @@ describe("DvPSettlement", () => {
   let dvp: DvPSettlement;
 
   let admin: HardhatEthersSigner;
-  let regulator: HardhatEthersSigner;
   let alice: HardhatEthersSigner; // Pagador (from)
   let bob: HardhatEthersSigner; // Recebedor (to)
 
@@ -45,40 +45,13 @@ describe("DvPSettlement", () => {
   const ciphertext = mockCiphertext("dvp-test");
 
   beforeEach(async () => {
-    [admin, regulator, alice, bob] = await ethers.getSigners();
-
-    const verifierFactory = await ethers.getContractFactory("Verifier");
-    verifier = (await verifierFactory.deploy()) as unknown as Verifier;
-    await verifier.waitForDeployment();
-
-    const tokenFactory = await ethers.getContractFactory("PrivateToken");
-    token = (await tokenFactory.deploy(admin.address)) as unknown as PrivateToken;
-    await token.waitForDeployment();
-
-    const viewerFactory = await ethers.getContractFactory("RegulatorViewer");
-    viewer = (await viewerFactory.deploy(
-      admin.address,
-      regulator.address
-    )) as unknown as RegulatorViewer;
-    await viewer.waitForDeployment();
-
-    const dvpFactory = await ethers.getContractFactory("DvPSettlement");
-    dvp = (await dvpFactory.deploy(
-      admin.address,
-      await verifier.getAddress(),
-      await token.getAddress(),
-      await viewer.getAddress()
-    )) as unknown as DvPSettlement;
-    await dvp.waitForDeployment();
-
-    // Concede papeis: DvPSettlement como SETTLEMENT no token e no viewer
-    await token.connect(admin).grantRole(await token.MINTER_ROLE(), admin.address);
-    await token
-      .connect(admin)
-      .grantRole(await token.SETTLEMENT_ROLE(), await dvp.getAddress());
-    await viewer
-      .connect(admin)
-      .grantRole(await viewer.SETTLEMENT_ROLE(), await dvp.getAddress());
+    const stack = await deployFullStack();
+    verifier = stack.verifier;
+    token = stack.token;
+    viewer = stack.viewer;
+    dvp = stack.dvp;
+    admin = stack.admin;
+    [, , alice, bob] = stack.signers;
 
     // Registra commitments iniciais de Alice (S_A=100) e Bob (S_B=50) — bate
     // com fixture.inputs.commitAOld/commitBOld
