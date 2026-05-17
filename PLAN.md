@@ -44,7 +44,7 @@
 | **M4** | Contratos + 37 testes unitários (100% coverage) | ✅ |
 | **M5** | Integração ponta-a-ponta + 6 testes E2E | ✅ |
 | **M6** | Benchmark + STRIDE + matriz LGPD + reproducibility | ✅ |
-| **M7** | Cryptolaw + ARCHITECTURE + 5 SVGs + DEMO_SCRIPT | ✅ |
+| **M7** | Cryptolaw + ARCHITECTURE + 5 SVGs + USAGE | ✅ |
 
 **RNFs validados:**
 
@@ -179,7 +179,7 @@ Entregas:
 
 ---
 
-### M7 — Documentação Cryptolaw + diagramas + roteiro de banca
+### M7 — Documentação Cryptolaw + diagramas + guia de uso
 **Complexidade:** Média | **Estimativa:** 4–6h
 **Pré-requisito:** M6 concluído
 
@@ -188,8 +188,8 @@ Entregas:
 - `docs/ARCHITECTURE.md` — descrição textual dos componentes
 - `docs/figures/architecture.svg` — diagrama de componentes
 - `docs/figures/dvp_sequence.svg` — diagrama de sequência da transação DvP
-- `docs/figures/benchmark_*.png` — gráficos do CSV
-- `docs/DEMO_SCRIPT.md` — roteiro de demonstração de 5 minutos para a banca
+- `docs/figures/benchmark_*.svg` — gráficos do CSV
+- `docs/USAGE.md` — guia prático de operação (comandos do dia a dia)
 - `README.md` final — permite reprodução completa em < 10 minutos a partir de clone limpo
 - `make all` executa: `besu:up` → `zkp:setup` → `deploy` → `demo` → `benchmark` (RNF04)
 

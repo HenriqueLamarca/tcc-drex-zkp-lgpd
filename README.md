@@ -101,7 +101,7 @@ Detalhes em [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) (10 seções, c
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Diagrama de componentes, fluxo de dados, modelo de papéis |
 | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | STRIDE com 18 ameaças (16 mitigadas) |
 | [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) | Guia de reprodução em < 10 min |
-| [`docs/DEMO_SCRIPT.md`](docs/DEMO_SCRIPT.md) | Roteiro de demonstração de 5 min para a banca |
+| [`docs/USAGE.md`](docs/USAGE.md) | Guia prático de operação (comandos do dia a dia) |
 
 ### Decisões arquiteturais (ADRs)
 | ADR | Decisão |
@@ -138,7 +138,7 @@ Regenerar: `npx ts-node docs/figures/generate_svgs.ts`
 ├── besu-network/              Hyperledger Besu QBFT (4 nós) via docker-compose
 ├── docs/
 │   ├── ARCHITECTURE.md, THEORY_CODE_IS_LAW.md, LGPD_COMPLIANCE.md
-│   ├── THREAT_MODEL.md, REPRODUCIBILITY.md, DEMO_SCRIPT.md
+│   ├── THREAT_MODEL.md, REPRODUCIBILITY.md, USAGE.md
 │   ├── ADR/                   5 registros de decisão arquitetural
 │   └── figures/               Diagramas SVG + script gerador
 ├── deployments/               Endereços dos contratos por rede (gitignored)
@@ -158,7 +158,7 @@ Regenerar: `npx ts-node docs/figures/generate_svgs.ts`
 | **M4** | Contratos Solidity + testes unitários (100% coverage) | ✅ |
 | **M5** | Integração ponta-a-ponta (deploy + demo + integração) | ✅ |
 | **M6** | Benchmark + threat model + matriz LGPD + reproducibility | ✅ |
-| **M7** | Cryptolaw + diagramas + roteiro de banca | ✅ |
+| **M7** | Cryptolaw + ARCHITECTURE + diagramas SVG + guia de uso | ✅ |
 
 Detalhes da divisão e estimativas em [`PLAN.md`](PLAN.md).
 

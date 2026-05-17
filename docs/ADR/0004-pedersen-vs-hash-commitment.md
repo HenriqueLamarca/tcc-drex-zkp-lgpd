@@ -73,7 +73,7 @@ A homomorfia traria benefício apenas em uma arquitetura onde a verificação de
 **Burgos & Alchieri (2025)** — referência central do TCC para a lógica DvP — usa Poseidon como primitiva de commitment. Manter a mesma escolha facilita:
 
 - Comparações diretas de resultados (constraints, gas, tempo de prova)
-- Defesa da PoC perante a banca examinadora
+- Consistência metodológica com a literatura de referência
 - Reuso futuro de fixtures e benchmarks
 
 ### 3. Custo computacional alinhado com os RNFs
@@ -125,8 +125,8 @@ Adotar Poseidon na PoC mantém o trabalho **alinhado ao estado-da-arte da área*
 - **Risco:** descobertas futuras de criptanálise contra Poseidon.
   **Mitigação:** arquitetura modular — a função `commit` está isolada em uma função do circuito, permitindo substituição futura sem reescrever toda a lógica DvP.
 
-- **Risco:** banca questionar a mudança de decisão entre Passo 0 e M3.
-  **Mitigação:** este ADR documenta explicitamente a revisão e a motivação, evidenciando rigor metodológico em vez de inconsistência.
+- **Risco:** a mudança de decisão entre o Passo 0 e o M3 ser interpretada como inconsistência.
+  **Mitigação:** este ADR documenta explicitamente a revisão e a motivação, evidenciando rigor metodológico (correção rastreável) em vez de inconsistência.
 
 ---
 

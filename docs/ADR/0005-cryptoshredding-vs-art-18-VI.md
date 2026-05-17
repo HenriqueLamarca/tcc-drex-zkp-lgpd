@@ -101,7 +101,7 @@ Estas extensões estão fora do escopo da PoC (TCC) mas listadas como trabalho f
 - **Atende parcialmente** ao art. 18, VI conforme interpretação técnica predominante
 - Implementação simples (5 linhas de Solidity), gas baixo (~30k)
 - Audit trail preservado via evento `CommitmentShredded`
-- Decisão honestamente declarada — banca examinadora não recebe promessa exagerada
+- Decisão honestamente declarada — não há promessa exagerada de "eliminação total"
 - Caminho de fortalecimento técnico bem definido para produção
 
 ### Negativas

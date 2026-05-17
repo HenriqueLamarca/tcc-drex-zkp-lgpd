@@ -249,9 +249,9 @@ Detalhes em [`docs/THREAT_MODEL.md`](THREAT_MODEL.md) (categoria S2 — Spoofing
 │   ├── THREAT_MODEL.md        STRIDE com 18 ameaças
 │   ├── ARCHITECTURE.md        Este documento
 │   ├── REPRODUCIBILITY.md     Guia de reprodução em < 10 min
-│   ├── DEMO_SCRIPT.md         Roteiro de defesa de 5 min
+│   ├── USAGE.md               Guia prático de operação
 │   ├── ADR/                   Registros de decisões (0001–0005)
-│   └── figures/               Diagramas SVG para a monografia
+│   └── figures/               Diagramas SVG dos componentes e benchmark
 ├── deployments/               JSON com endereços por rede (gitignored)
 ├── .github/workflows/ci.yml   Lint + typecheck + test + coverage
 ├── hardhat.config.ts          viaIR habilitado, BN128 evmVersion london

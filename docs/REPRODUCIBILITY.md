@@ -13,9 +13,19 @@
 | **Node.js** | ≥ 20 LTS | `node --version` | Validado com v20.x e v24.x |
 | **npm** | ≥ 10 | `npm --version` | Acompanha o Node |
 | **Git** | ≥ 2.x | `git --version` | — |
-| **Bash** | qualquer | `bash --version` | No Windows: vem com Git for Windows (Git Bash) |
+| **Git Bash** | (incluso no Git) | `& "C:\Program Files\Git\bin\bash.exe" --version` | Scripts `.sh` rodam no Git Bash |
 
 > **Rust e ZoKrates CLI NÃO são necessários.** Toda a parte de ZoKrates roda via container Docker oficial `zokrates/zokrates:0.8.8`.
+
+> **Windows — atenção aos scripts `.sh`:** digitar `bash <script>` no PowerShell
+> pode invocar o **WSL** (que pode estar ausente ou quebrado, gerando erros
+> `getpwuid(0) failed` / `Failed to translate ...`). Sempre invoque o Git Bash
+> explicitamente:
+> ```powershell
+> & "C:\Program Files\Git\bin\bash.exe" scripts/02_test_zkp.sh
+> ```
+> No Linux/macOS, `bash <script>` funciona normalmente. Os targets do
+> `Makefile` já chamam o Git Bash corretamente quando executados via `make`.
 
 ### Recursos mínimos da máquina
 
@@ -77,9 +87,9 @@ Sobe 4 validadores em containers Docker (`besu-network/docker-compose.yml`). A p
 
 Execuções subsequentes pulam a inicialização (idempotente).
 
-**Validar:**
-```bash
-bash besu-network/wait-for-besu.sh
+**Validar** (Windows — use o Git Bash explícito; Linux/macOS — `bash` direto):
+```powershell
+& "C:\Program Files\Git\bin\bash.exe" besu-network/wait-for-besu.sh
 # Esperado: "Rede pronta — todos os 4 nos minerando"
 ```
 

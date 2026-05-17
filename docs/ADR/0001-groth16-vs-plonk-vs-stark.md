@@ -60,7 +60,7 @@ STARK, em sua forma pura, não tem precompileds compatíveis na EVM. Verificaç�
 
 Geração de prova Groth16 sobre o circuito `solvency_dvp.zok` (1.728 constraints) leva ~5s na máquina de referência. PLONK levaria ~12s (ainda OK). STARK levaria 30s+ (no limite do RNF01).
 
-Para a defesa do TCC (demo ao vivo), 5s é confortável. 30s seria desconfortável.
+Para execução interativa do cenário ponta-a-ponta (`make demo`), 5s mantém o ciclo de feedback fluido; 30s degradaria a experiência de operação.
 
 ### 3. Prova compacta (256 bytes)
 

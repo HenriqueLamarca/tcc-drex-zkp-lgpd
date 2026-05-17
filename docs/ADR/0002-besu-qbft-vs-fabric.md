@@ -39,7 +39,7 @@ Adotar **Hyperledger Besu 24.10.0 com consenso QBFT em rede de 4 validadores per
 
 ### 1. Alinhamento direto com o DREX (peso decisivo)
 
-O Banco Central do Brasil escolheu o Hyperledger Besu como plataforma do piloto do DREX. Documentação oficial do BCB e relatórios do **LIFT Lab** confirmam esta decisão. Para um TCC cujo objetivo é **demonstrar conformidade LGPD em uma transação realista do DREX**, qualquer outra plataforma reduziria a validade externa da PoC perante a banca examinadora e a comunidade técnica do SFN.
+O Banco Central do Brasil escolheu o Hyperledger Besu como plataforma do piloto do DREX. Documentação oficial do BCB e relatórios do **LIFT Lab** confirmam esta decisão. Para uma PoC cujo objetivo é **demonstrar conformidade LGPD em uma transação realista do DREX**, qualquer outra plataforma reduziria a validade externa do trabalho perante a comunidade técnica do SFN.
 
 ### 2. Compatibilidade EVM e suporte nativo a Groth16/BN128
 
@@ -94,7 +94,7 @@ Besu opera nativamente em containers Docker oficiais (`hyperledger/besu`). A red
 Descartada por não usar EVM e não ter precompileds BN128 nativos. Fabric é forte em casos de uso onde múltiplas linguagens de chaincode são desejáveis e o controle de canal é central (ex.: TradeLens, Food Trust), mas não é a plataforma do DREX.
 
 ### Polygon Edge
-Tecnicamente próxima ao Besu (EVM, BN128, IBFT/PolyBFT), mas sem alinhamento institucional com o BCB. Reduziria a validade externa da PoC para a banca.
+Tecnicamente próxima ao Besu (EVM, BN128, IBFT/PolyBFT), mas sem alinhamento institucional com o BCB. Reduziria a validade externa da PoC frente ao ambiente real do DREX.
 
 ### GoQuorum / Quorum
 Descontinuada oficialmente pela ConsenSys em 2024. Risco de manutenção inviabiliza adoção em trabalho acadêmico de longo prazo.

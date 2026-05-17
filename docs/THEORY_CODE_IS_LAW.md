@@ -348,5 +348,5 @@ A obra *Cryptolaw* (Almedina) defende esta convergência em termos abstratos. Es
 - [`docs/THREAT_MODEL.md`](THREAT_MODEL.md) — STRIDE com 18 ameaças
 - [`docs/ARCHITECTURE.md`](ARCHITECTURE.md) — descrição dos componentes
 - [`docs/REPRODUCIBILITY.md`](REPRODUCIBILITY.md) — guia de reprodução em < 10 min
-- [`docs/DEMO_SCRIPT.md`](DEMO_SCRIPT.md) — roteiro de demonstração
+- [`docs/USAGE.md`](USAGE.md) — guia prático de operação
 - [`docs/ADR/`](ADR/) — registros de decisões arquiteturais (0001–0005)

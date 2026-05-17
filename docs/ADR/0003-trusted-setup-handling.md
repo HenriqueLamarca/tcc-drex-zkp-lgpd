@@ -94,7 +94,7 @@ PLONK e Halo2 usam setup **universal e atualizável** — uma única cerimônia 
 
 - Setup roda em < 10s na máquina de referência (RNF04 atendido)
 - Pipeline completamente reprodutível (`make zkp:setup`)
-- Decisão honestamente declarada — banca examinadora pode avaliar a PoC sem ambiguidade sobre limitações
+- Decisão honestamente declarada — a limitação fica explícita e inequívoca para qualquer avaliador do trabalho
 
 ### Negativas
 
