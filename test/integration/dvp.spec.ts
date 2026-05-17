@@ -26,6 +26,9 @@ import {
   loadValidFixture,
   uintToBytes32,
   mockCiphertext,
+  encryptForRegulator,
+  decryptAsRegulator,
+  type RegulatorPayload,
 } from "../fixtures/helpers";
 import { deployFullStack } from "../fixtures/deployStack";
 
@@ -40,7 +43,14 @@ describe("Integration — DvP fluxo completo (mint -> dvp -> audit)", () => {
   let bob: HardhatEthersSigner;
 
   const fixture = loadValidFixture();
-  const ciphertext = mockCiphertext("integration");
+  // Payload de auditoria real, cifrado com ECIES para o regulador.
+  const auditPayload: RegulatorPayload = {
+    from: "0x0000000000000000000000000000000000000000",
+    to: "0x0000000000000000000000000000000000000000",
+    value: "30",
+    timestamp: "2026-01-01T00:00:00.000Z",
+  };
+  let ciphertext: string;
 
   const aliceCommitOld = uintToBytes32(fixture.inputs.commitAOld);
   const bobCommitOld = uintToBytes32(fixture.inputs.commitBOld);
@@ -56,6 +66,10 @@ describe("Integration — DvP fluxo completo (mint -> dvp -> audit)", () => {
     admin = stack.admin;
     regulator = stack.regulator;
     [, , alice, bob] = stack.signers;
+
+    auditPayload.from = alice.address;
+    auditPayload.to = bob.address;
+    ciphertext = encryptForRegulator(auditPayload);
   });
 
   it("admin minta commitments iniciais para Alice e Bob", async () => {
@@ -94,6 +108,22 @@ describe("Integration — DvP fluxo completo (mint -> dvp -> audit)", () => {
     expect(record.to).to.equal(bob.address);
     expect(record.ciphertext).to.equal(ciphertext);
     expect(record.blockNumber).to.be.greaterThan(0n);
+  });
+
+  it("acesso auditavel (accessEncryptedTx) emite RegulatorAccessed", async () => {
+    await expect(viewer.connect(regulator).accessEncryptedTx(0)).to.emit(
+      viewer,
+      "RegulatorAccessed"
+    );
+  });
+
+  it("regulador decifra o blob ECIES e recupera o payload (roundtrip real)", async () => {
+    const record = await viewer.connect(regulator).getEncryptedTx(0);
+    const payload = decryptAsRegulator(record.ciphertext);
+    expect(payload.from).to.equal(alice.address);
+    expect(payload.to).to.equal(bob.address);
+    expect(payload.value).to.equal("30"); // só o regulador consegue ver isto
+    expect(payload.timestamp).to.equal(auditPayload.timestamp);
   });
 
   it("metadados publicos disponiveis sem REGULATOR_ROLE", async () => {

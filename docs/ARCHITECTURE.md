@@ -59,7 +59,7 @@ flowchart TB
 |---|---|---|
 | **Wallet do titular** | Armazena `(value, randomness)` por commitment; assina transações | ECDSA (secp256k1, padrão Ethereum) |
 | **Gerador de prova** | Calcula witness + gera prova Groth16 | ZoKrates 0.8.8 via Docker (sem instalação no host) |
-| **Cifrador ECIES** | Empacota metadados de transação para o regulador | ECIES sobre secp256k1 (mock na PoC; real em produção) |
+| **Cifrador ECIES** | Empacota metadados de transação para o regulador | ECIES real sobre secp256k1 (ECDH + HKDF + AES-256-GCM, lib `eciesjs`) |
 
 **Por que off-chain:** geração de prova é computacionalmente cara (~2s) e exige acesso à randomness privada. **Manter off-chain é exigência de privacidade**, não otimização.
 

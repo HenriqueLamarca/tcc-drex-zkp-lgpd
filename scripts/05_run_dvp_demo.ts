@@ -35,7 +35,8 @@ import {
 import {
   loadValidFixture,
   uintToBytes32,
-  mockCiphertext,
+  encryptForRegulator,
+  decryptAsRegulator,
 } from "../test/fixtures/helpers";
 
 interface Deployment {
@@ -125,9 +126,20 @@ async function main(): Promise<void> {
     );
   }
 
-  // ─── Cifra payload para regulador (mock ECIES) ─────────────────────────────
-  const ciphertext = mockCiphertext(`demo-${Date.now()}`);
-  log({ event: "ciphertext_prepared", bytes: (ciphertext.length - 2) / 2 });
+  // ─── Cifra payload real para o regulador (ECIES secp256k1) ─────────────────
+  // O payload contém o valor transferido (V=30) — NUNCA impresso no log
+  // (RNF06). Só o regulador, com a chave privada, decifra off-chain.
+  const ciphertext = encryptForRegulator({
+    from: alice.address,
+    to: bob.address,
+    value: "30",
+    timestamp: new Date().toISOString(),
+  });
+  log({
+    event: "ciphertext_prepared",
+    scheme: "ECIES(secp256k1 + HKDF + AES-256-GCM)",
+    bytes: (ciphertext.length - 2) / 2,
+  });
 
   // ─── Executa DvP ───────────────────────────────────────────────────────────
   log({ event: "dvp_submitting" });
@@ -191,7 +203,25 @@ async function main(): Promise<void> {
     ciphertextBytes: (auditRecord.ciphertext.length - 2) / 2,
     accessAuditTxHash: accessTx.hash,
     accessAuditBlock: accessReceipt!.blockNumber,
-    note: "RegulatorAccessed emitido on-chain — acesso nao-repudiavel; ciphertext decifra off-chain",
+    note: "RegulatorAccessed emitido on-chain — acesso nao-repudiavel",
+  });
+
+  // ─── Regulador decifra o blob ECIES off-chain (com a chave privada) ────────
+  // Prova que o canal de auditoria funciona fim-a-fim. O valor decifrado
+  // (V) NÃO é impresso — RNF06: apenas confirmamos o roundtrip e que as
+  // partes batem com o esperado, sem vazar o valor no log público.
+  const decrypted = decryptAsRegulator(auditRecord.ciphertext);
+  const roundtripOk =
+    decrypted.from === alice.address &&
+    decrypted.to === bob.address &&
+    typeof decrypted.value === "string" &&
+    decrypted.value.length > 0;
+  log({
+    event: "regulator_decrypted_offchain",
+    scheme: "ECIES(secp256k1 + HKDF + AES-256-GCM)",
+    roundtripVerified: roundtripOk,
+    partiesMatch: decrypted.from === alice.address && decrypted.to === bob.address,
+    note: "valor decifrado recuperado pelo regulador, NAO impresso (RNF06)",
   });
 
   // ─── Resumo final ──────────────────────────────────────────────────────────
