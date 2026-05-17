@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 400" width="700" height="400" font-family="Arial, sans-serif">
+  <style>
+    .title { font-size: 16px; font-weight: bold; fill: #1a1a1a; }
+    .subtitle { font-size: 11px; fill: #555; }
+    .label { font-size: 11px; fill: #1a1a1a; }
+    .label-small { font-size: 10px; fill: #555; }
+    .axis { stroke: #888; stroke-width: 1; }
+    .grid { stroke: #ddd; stroke-width: 0.5; stroke-dasharray: 3,3; }
+    .bar-good { fill: #2e8b57; }
+    .bar-warn { fill: #d97706; }
+    .bar-info { fill: #2563eb; }
+    .bar-neutral { fill: #6b7280; }
+    .threshold { stroke: #dc2626; stroke-width: 1.5; stroke-dasharray: 6,3; }
+    .threshold-label { font-size: 10px; fill: #dc2626; font-weight: bold; }
+    .box { fill: #f8f9fb; stroke: #1f3a5f; stroke-width: 1.5; rx: 6; ry: 6; }
+    .box-text { font-size: 11px; fill: #1a1a1a; text-anchor: middle; }
+    .arrow { stroke: #555; stroke-width: 1.2; fill: none; marker-end: url(#arrow); }
+    .arrow-text { font-size: 9px; fill: #444; }
+    .role { fill: #fef3c7; stroke: #d97706; stroke-width: 1; rx: 4; ry: 4; }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+
+  <text x="350" y="30" text-anchor="middle" class="title">Tempo de geracao de prova off-chain</text>
+  <text x="350" y="50" text-anchor="middle" class="subtitle">RNF01: total < 30s | medido: 1.93s (15x melhor)</text>
+
+  <line x1="180" y1="100" x2="180" y2="320" class="axis"/>
+  <line x1="180" y1="320" x2="600" y2="320" class="axis"/>
+  
+  <line x1="600" y1="90" x2="600" y2="320" class="threshold"/>
+  <text x="600" y="86" text-anchor="middle" class="threshold-label">RNF01: 30s</text>
+    
+  <text x="170" y="140.66666666666666" text-anchor="end" class="label">compute-witness</text>
+  <rect x="180" y="113.75" width="12.166" height="45.83333333333333" class="bar-info"/>
+  <text x="200.166" y="140.66666666666666" class="label" font-weight="bold">869 ms</text>
+    
+  <text x="170" y="213.99999999999997" text-anchor="end" class="label">generate-proof</text>
+  <rect x="180" y="187.08333333333331" width="14.896" height="45.83333333333333" class="bar-info"/>
+  <text x="202.89600000000002" y="213.99999999999997" class="label" font-weight="bold">1.064 ms</text>
+    
+  <text x="170" y="287.3333333333333" text-anchor="end" class="label">TOTAL off-chain</text>
+  <rect x="180" y="260.41666666666663" width="27.061999999999998" height="45.83333333333333" class="bar-good"/>
+  <text x="215.062" y="287.3333333333333" class="label" font-weight="bold">1.93s</text>
+    
+  <line x1="180" y1="320" x2="180" y2="325" class="axis"/>
+  <text x="180" y="338" text-anchor="middle" class="label-small">0</text>
+    
+  <line x1="264" y1="320" x2="264" y2="325" class="axis"/>
+  <text x="264" y="338" text-anchor="middle" class="label-small">6k</text>
+    
+  <line x1="348" y1="320" x2="348" y2="325" class="axis"/>
+  <text x="348" y="338" text-anchor="middle" class="label-small">12k</text>
+    
+  <line x1="432" y1="320" x2="432" y2="325" class="axis"/>
+  <text x="432" y="338" text-anchor="middle" class="label-small">18k</text>
+    
+  <line x1="516" y1="320" x2="516" y2="325" class="axis"/>
+  <text x="516" y="338" text-anchor="middle" class="label-small">24k</text>
+    
+  <line x1="600" y1="320" x2="600" y2="325" class="axis"/>
+  <text x="600" y="338" text-anchor="middle" class="label-small">30k</text>
+    
+  <text x="390" y="358" text-anchor="middle" class="label">ms</text>
+  <text x="350" y="385" text-anchor="middle" class="label-small" font-style="italic">Maquina: Intel i5-12500H, 32 GB RAM, Win 11 | Mediana de 5 iteracoes</text>
+  
+</svg>
