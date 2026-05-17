@@ -174,16 +174,24 @@ async function main(): Promise<void> {
     txCount: txCount.toString(),
   });
 
-  // ─── Regulador recupera audit trail ────────────────────────────────────────
-  const auditRecord = await viewer.connect(regulator).getEncryptedTx(lastTxId);
+  // ─── Regulador acessa audit trail pela via AUDITAVEL ───────────────────────
+  // accessEncryptedTx emite RegulatorAccessed (trilha imutavel on-chain de
+  // quem acessou o que e quando) — fecha o vetor R2 do THREAT_MODEL.
+  const auditRecord = await viewer
+    .connect(regulator)
+    .accessEncryptedTx.staticCall(lastTxId);
+  const accessTx = await viewer.connect(regulator).accessEncryptedTx(lastTxId);
+  const accessReceipt = await accessTx.wait();
   log({
-    event: "regulator_retrieved_audit",
+    event: "regulator_accessed_audit",
     txId: lastTxId.toString(),
     from: auditRecord.from,
     to: auditRecord.to,
     blockNumber: auditRecord.blockNumber.toString(),
     ciphertextBytes: (auditRecord.ciphertext.length - 2) / 2,
-    note: "ciphertext nao impresso — decifra off-chain pelo regulador",
+    accessAuditTxHash: accessTx.hash,
+    accessAuditBlock: accessReceipt!.blockNumber,
+    note: "RegulatorAccessed emitido on-chain — acesso nao-repudiavel; ciphertext decifra off-chain",
   });
 
   // ─── Resumo final ──────────────────────────────────────────────────────────

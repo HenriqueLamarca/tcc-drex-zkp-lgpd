@@ -11,6 +11,7 @@
 
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { anyUint } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { RegulatorViewer } from "../../typechain-types";
 
@@ -122,6 +123,51 @@ describe("RegulatorViewer", () => {
 
       await expect(
         viewer.connect(settlement).getEncryptedTx(0)
+      ).to.be.revertedWithCustomError(viewer, "AccessControlUnauthorizedAccount");
+    });
+  });
+
+  describe("accessEncryptedTx (via auditavel — THREAT_MODEL R2)", () => {
+    beforeEach(async () => {
+      await viewer.connect(settlement).recordTx(alice.address, bob.address, CIPHER_1);
+    });
+
+    it("emite RegulatorAccessed registrando quem/o que/quando", async () => {
+      await expect(viewer.connect(regulator).accessEncryptedTx(0))
+        .to.emit(viewer, "RegulatorAccessed")
+        .withArgs(0n, regulator.address, anyUint);
+    });
+
+    it("retorna o registro completo (via staticCall)", async () => {
+      const record = await viewer
+        .connect(regulator)
+        .accessEncryptedTx.staticCall(0);
+      expect(record.from).to.equal(alice.address);
+      expect(record.to).to.equal(bob.address);
+      expect(record.ciphertext).to.equal(CIPHER_1);
+    });
+
+    it("cria trilha imutavel: acesso fica no recibo da transacao", async () => {
+      const tx = await viewer.connect(regulator).accessEncryptedTx(0);
+      const receipt = await tx.wait();
+      const logs = receipt!.logs.filter(
+        (l) => "fragment" in l && l.fragment?.name === "RegulatorAccessed"
+      );
+      expect(logs.length).to.equal(1);
+    });
+
+    it("revert TxNotFound para txId inexistente", async () => {
+      await expect(viewer.connect(regulator).accessEncryptedTx(999))
+        .to.be.revertedWithCustomError(viewer, "TxNotFound")
+        .withArgs(999n);
+    });
+
+    it("revert se chamado sem REGULATOR_ROLE", async () => {
+      await expect(
+        viewer.connect(outsider).accessEncryptedTx(0)
+      ).to.be.revertedWithCustomError(viewer, "AccessControlUnauthorizedAccount");
+      await expect(
+        viewer.connect(settlement).accessEncryptedTx(0)
       ).to.be.revertedWithCustomError(viewer, "AccessControlUnauthorizedAccount");
     });
   });

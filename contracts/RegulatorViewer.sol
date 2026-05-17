@@ -52,6 +52,18 @@ contract RegulatorViewer is AccessControl {
         address indexed to
     );
 
+    /// @notice Emitido quando o regulador acessa o conteudo cifrado de uma
+    ///         transacao pela via auditavel (accessEncryptedTx).
+    /// @dev Materializa a nao-repudiacao do acesso do regulador
+    ///      (THREAT_MODEL R2): o acesso fica registrado imutavelmente
+    ///      on-chain, espelhando a responsabilizacao da LC 105/2001 e o
+    ///      principio de responsabilizacao da LGPD (art. 6º, X).
+    event RegulatorAccessed(
+        uint256 indexed txId,
+        address indexed regulator,
+        uint256 timestamp
+    );
+
     // ─── Erros ──────────────────────────────────────────────────────────────
 
     error EmptyCiphertext();
@@ -105,9 +117,30 @@ contract RegulatorViewer is AccessControl {
     // ─── Acesso pelo regulador ──────────────────────────────────────────────
 
     /**
-     * @notice Recupera o registro cifrado de uma transacao para auditoria.
-     * @dev Espelha LC 105/2001 (sigilo bancario): so' o regulador apropriado
-     *      acessa o conteudo. Outros papeis veem apenas metadados via evento.
+     * @notice Acesso AUDITAVEL ao registro cifrado — via canonica do regulador.
+     * @dev Diferente de getEncryptedTx (view, sem rastro), esta funcao emite
+     *      RegulatorAccessed, deixando trilha imutavel on-chain de QUEM acessou
+     *      O QUE e QUANDO. Fecha o vetor R2 (Repudiation) do THREAT_MODEL: o
+     *      regulador nao pode negar ter consultado um registro especifico.
+     *      Procedimento institucional deve usar esta funcao, nao getEncryptedTx.
+     * @param txId Sequencial da transacao.
+     * @return record Registro completo (decifra off-chain).
+     */
+    function accessEncryptedTx(
+        uint256 txId
+    ) external onlyRole(REGULATOR_ROLE) returns (EncryptedRecord memory record) {
+        record = _records[txId];
+        if (record.ciphertext.length == 0) revert TxNotFound(txId);
+
+        // solhint-disable-next-line not-rely-on-time
+        emit RegulatorAccessed(txId, msg.sender, block.timestamp);
+    }
+
+    /**
+     * @notice Leitura SEM trilha do registro cifrado (conveniencia/inspecao).
+     * @dev View — nao emite evento nem custa gas. Uso governado por politica
+     *      interna; a via auditavel oficial e' accessEncryptedTx. Mantida para
+     *      inspecao rapida off-chain e testes.
      * @param txId Sequencial da transacao.
      * @return record Registro completo (decifra off-chain).
      */

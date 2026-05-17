@@ -161,14 +161,27 @@ A análise considera o **trust boundary** completo:
 
 **Impacto:** médio — relevante para LC 105/2001 (sigilo bancário com responsabilidade do agente).
 
-**Mitigação:**
-- `getEncryptedTx` é uma view function — **não deixa rastro on-chain** sozinha
-- Para audit trail completo, em produção recomenda-se:
-  - Função separada `recordRegulatorAccess(uint256 txId)` que **muda estado** e emite evento
-  - Multi-factor authentication off-chain antes da decifração
-  - Logging em sistema de auditoria interno do regulador (fora da blockchain)
+**Mitigação (implementada):**
+- `RegulatorViewer.accessEncryptedTx(txId)` é a **via canônica** de acesso do
+  regulador: muda estado e **emite o evento `RegulatorAccessed(txId, regulator,
+  timestamp)`**, criando trilha **imutável on-chain** de quem acessou o quê e
+  quando. O regulador não pode negar a consulta.
+- Validado em `RegulatorViewer.spec.ts` (emite evento, cria recibo, restrito a
+  `REGULATOR_ROLE`) e exercido no cenário `scripts/05_run_dvp_demo.ts`.
+- Materializa a responsabilização da LGPD art. 6º, X e o regime de
+  responsabilidade do agente da LC 105/2001.
 
-**Status:** **Mitigação parcial reconhecida**; fortalecimento documentado para produção.
+**Limitação residual reconhecida:**
+- `getEncryptedTx` (view, sem rastro) permanece como conveniência de inspeção
+  off-chain; seu uso é governado por política interna. O procedimento
+  institucional **deve** usar `accessEncryptedTx`. Remover totalmente a view
+  fecharia esse resíduo, mas reduziria a ergonomia de inspeção — decisão
+  consciente, no mesmo espírito honesto do ADR-0005.
+- Reforço de produção: MFA off-chain antes da decifração + logging no sistema
+  de auditoria interno do regulador.
+
+**Status:** **Mitigado** — via auditável on-chain implementada; resíduo da
+view de conveniência declarado.
 
 ---
 
@@ -335,7 +348,7 @@ A análise considera o **trust boundary** completo:
 |---|---|---|---|
 | **Spoofing** | 3 | 3 | Baixo |
 | **Tampering** | 3 | 3 | Baixo (auditoria de circuito recomendada) |
-| **Repudiation** | 2 | 2 | Médio (audit do regulador) |
+| **Repudiation** | 2 | 2 | Baixo (R2 fechado via `accessEncryptedTx`) |
 | **Information Disclosure** | 4 | 3 | Médio (timing analysis I2) |
 | **Denial of Service** | 3 | 3 | Baixo |
 | **Elevation of Privilege** | 3 | 3 | **Crítico para produção** (E1: CRS) |
