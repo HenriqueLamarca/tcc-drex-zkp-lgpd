@@ -13,10 +13,11 @@
 // Fluxo:
 //   1. Carrega deployment JSON da rede atual
 //   2. Mint inicial dos commitments de Alice e Bob (idempotente)
-//   3. Cifra payload mock para regulador (em prod: ECIES real)
+//   3. Cifra payload real para o regulador (ECIES secp256k1)
 //   4. Submete prova Groth16 + 4 inputs publicos ao DvPSettlement
 //   5. Verifica state changes: commitments updated, txCount++
-//   6. Regulador recupera audit trail (getEncryptedTx)
+//   6. Regulador acessa pela via auditavel (accessEncryptedTx) e decifra
+//      o blob off-chain (roundtrip ECIES verificado, sem vazar o valor)
 //   7. Imprime JSON estruturado — sem saldos/valores em plaintext (RNF06)
 //
 // Uso:

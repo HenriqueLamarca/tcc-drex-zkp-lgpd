@@ -3,6 +3,7 @@
 //
 // Carrega fixtures de prova geradas off-chain (scripts/03_generate_test_fixtures.sh)
 // e converte para os tipos que ethers v6 espera ao chamar Verifier.verifyTx.
+// Tambem provê o canal ECIES real (cifra/decifra para o regulador).
 // =============================================================================
 
 import fs from "fs";

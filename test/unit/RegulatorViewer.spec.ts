@@ -4,7 +4,8 @@
 // Cobre:
 //   - Construção com admin e regulador opcionais
 //   - recordTx (apenas SETTLEMENT_ROLE) e atribuição sequencial de txId
-//   - getEncryptedTx (apenas REGULATOR_ROLE) e isolamento de outros papéis
+//   - getEncryptedTx (leitura sem rastro, apenas REGULATOR_ROLE)
+//   - accessEncryptedTx (via auditável — emite RegulatorAccessed, R2)
 //   - getTxMetadata (publico) — partes/bloco/timestamp sem ciphertext
 //   - Erros customizados para todos os caminhos negativos
 // =============================================================================

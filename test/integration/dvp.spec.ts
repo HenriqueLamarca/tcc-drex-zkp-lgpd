@@ -10,7 +10,8 @@
 //   - Mint inicial de Alice e Bob com commitments da fixture
 //   - executeDvP com prova Groth16 real
 //   - Verificacao de state changes em PrivateToken e RegulatorViewer
-//   - Audit trail recuperavel pelo regulador
+//   - Acesso auditavel (accessEncryptedTx emite RegulatorAccessed)
+//   - Roundtrip ECIES real: regulador decifra o blob e recupera o payload
 //   - Invariantes de privacidade (nenhum saldo plaintext em events/calldata)
 // =============================================================================
 
