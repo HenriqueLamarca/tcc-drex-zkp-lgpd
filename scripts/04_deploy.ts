@@ -197,9 +197,15 @@ async function main(): Promise<void> {
   ]);
 }
 
-main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  log({ event: "deploy_failed", error: message });
-  pretty.fail(`Deploy falhou: ${message}`);
-  process.exitCode = 1;
-});
+main()
+  .then(() => {
+    // Sai explicitamente com 0 — workaround libuv/Windows
+    // (Assertion failed: !(handle->flags & UV_HANDLE_CLOSING))
+    process.exit(0);
+  })
+  .catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    log({ event: "deploy_failed", error: message });
+    pretty.fail(`Deploy falhou: ${message}`);
+    process.exit(1);
+  });

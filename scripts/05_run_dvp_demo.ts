@@ -288,9 +288,17 @@ async function main(): Promise<void> {
   });
 }
 
-main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  log({ event: "demo_failed", error: message });
-  pretty.fail(`Demo falhou: ${message}`);
-  process.exitCode = 1;
-});
+main()
+  .then(() => {
+    // Sai explicitamente com 0 — workaround para bug de libuv no Windows
+    // (Assertion failed: !(handle->flags & UV_HANDLE_CLOSING) src/win/async.c)
+    // que dispara no teardown do provider Hardhat/ethers e gera exit code
+    // != 0 mesmo quando a demo concluiu com sucesso.
+    process.exit(0);
+  })
+  .catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    log({ event: "demo_failed", error: message });
+    pretty.fail(`Demo falhou: ${message}`);
+    process.exit(1);
+  });
