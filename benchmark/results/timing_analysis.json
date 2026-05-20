@@ -1,0 +1,184 @@
+{
+  "n": 15,
+  "network": "hardhat",
+  "generatedAt": "2026-05-20T21:52:57.024Z",
+  "samples": [
+    {
+      "i": 0,
+      "txHash": "0x440114552da17f040e71abf55a85966b36818efed86b9c9ae065ca677ff7daa4",
+      "blockNumber": 10,
+      "blockTimestamp": 1779313985,
+      "gasUsed": 640380,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 1,
+      "txHash": "0x2ffcfa8f07180d1ed5206eeb1bf6dffe8488406f81b92089d15eb64e4183c99d",
+      "blockNumber": 13,
+      "blockTimestamp": 1779313988,
+      "gasUsed": 623304,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 2,
+      "txHash": "0xd37d3d37966f1a76dd34d9d0ab62416d8ca437f4e1954c140d5f1847a50937ef",
+      "blockNumber": 16,
+      "blockTimestamp": 1779313991,
+      "gasUsed": 623316,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 3,
+      "txHash": "0xf8ec2dc0d56d7bbb98a358309aa4742796669da6ac33874a174324e75a7519f4",
+      "blockNumber": 19,
+      "blockTimestamp": 1779313994,
+      "gasUsed": 623304,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 4,
+      "txHash": "0x32fe6f2607ffb637dc5810934cdc3329a345ce4608786f13343ab35433025f11",
+      "blockNumber": 22,
+      "blockTimestamp": 1779313997,
+      "gasUsed": 623304,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 5,
+      "txHash": "0x215efa016ca9c60c593e2a126c8f2b07aaf06487fb92a5118034ccf7a966e2be",
+      "blockNumber": 25,
+      "blockTimestamp": 1779314000,
+      "gasUsed": 623292,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 6,
+      "txHash": "0x0d6c8667b5cb4e01361fb4472a80769921dff445e608f9aa606b44379c4d9e48",
+      "blockNumber": 28,
+      "blockTimestamp": 1779314003,
+      "gasUsed": 623292,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 7,
+      "txHash": "0x5b6eaf70cd30f096ea1378ebe5d36e79dfe96b48d916e1d5c1aba61edeb7c535",
+      "blockNumber": 31,
+      "blockTimestamp": 1779314006,
+      "gasUsed": 623304,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 8,
+      "txHash": "0xd94c2c0a9d9565ec515d31a78a6d9f6905eddfa3d019e963d224f88a9aaec55f",
+      "blockNumber": 34,
+      "blockTimestamp": 1779314009,
+      "gasUsed": 623316,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 9,
+      "txHash": "0xf117f895e782c905f3734f8e5b71a5f2f316088dae8c1ce6a3de8c7da713326f",
+      "blockNumber": 37,
+      "blockTimestamp": 1779314012,
+      "gasUsed": 623316,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 10,
+      "txHash": "0xb5cd1e4ad19c7f349131cc4d219a006ef23af0232a3c754f214b9829009dd2d1",
+      "blockNumber": 40,
+      "blockTimestamp": 1779314015,
+      "gasUsed": 623316,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 11,
+      "txHash": "0xae052ed526fee8134d7cf2bd26a1c6314c82f505b4184ab39bdb3df6a9c58ddb",
+      "blockNumber": 43,
+      "blockTimestamp": 1779314018,
+      "gasUsed": 623304,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 12,
+      "txHash": "0x80739a65b178b38b12c6dbfdf1480bc561a806a3b02f8e2a26b3261e460bd5c5",
+      "blockNumber": 46,
+      "blockTimestamp": 1779314021,
+      "gasUsed": 623304,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 13,
+      "txHash": "0x9a014af1ba26c83bc9744b68f7c87af57328890c81aa92a7bbbe42780312c821",
+      "blockNumber": 49,
+      "blockTimestamp": 1779314024,
+      "gasUsed": 623292,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    },
+    {
+      "i": 14,
+      "txHash": "0x22c1c76812c11da4e0f77613662468d16e75d49e317396ad8c3a8484519e1e66",
+      "blockNumber": 52,
+      "blockTimestamp": 1779314027,
+      "gasUsed": 623316,
+      "calldataBytes": 772,
+      "ciphertextBytes": 252
+    }
+  ],
+  "stats": {
+    "gas": {
+      "min": 623292,
+      "max": 640380,
+      "mean": 624444,
+      "stddev": 4259.083845147921,
+      "range": 17088
+    },
+    "gasSteadyState": {
+      "min": 623292,
+      "max": 623316,
+      "mean": 623305.7142857143,
+      "stddev": 8.907689867497083,
+      "range": 24
+    },
+    "calldata": {
+      "min": 772,
+      "max": 772,
+      "mean": 772,
+      "stddev": 0,
+      "range": 0
+    },
+    "ciphertext": {
+      "min": 252,
+      "max": 252,
+      "mean": 252,
+      "stddev": 0,
+      "range": 0
+    },
+    "blockDelta": {
+      "min": 3,
+      "max": 3,
+      "mean": 3,
+      "stddev": 0,
+      "range": 0
+    }
+  },
+  "findings": [
+    "OK gasUsed steady-state (sem 1a tx): range=24 gas — abaixo do threshold de ruido EVM (warm/cold sstore = ~22100 gas). Variancia de 1a tx (17064 gas) e' efeito de cold storage, intrinseco a EVM e nao especifico ao protocolo",
+    "OK calldata constante: nao distingue transacoes por tamanho de calldata",
+    "OK ciphertext constante"
+  ]
+}

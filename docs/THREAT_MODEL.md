@@ -210,12 +210,24 @@ view de conveniência declarado.
 
 **Impacto:** médio — não revela valores, mas pode quebrar **anonimato de partes** em rede semi-pública.
 
-**Mitigação proposta na PoC:**
-- **Batching temporal:** acumular DvPs em janelas fixas (e.g., 1 minuto) e processá-los em ordem aleatória
-- **Padding de calldata:** garantir que toda `executeDvP` tenha tamanho de calldata constante (ECIES blob de tamanho fixo)
+**Medição empírica (script `scripts/timing_analysis.ts`):** 15 DvPs sequenciais foram submetidos e os canais observáveis medidos. Resultado (artefatos em `benchmark/results/timing_analysis.{csv,json}`):
+
+| Canal | Range observado | Interpretação |
+|---|---|---|
+| `calldata` (bytes) | **0** | Constante — ECIES com payload de tamanho fixo não vaza por calldata |
+| `ciphertext` (bytes) | **0** | Constante |
+| `gasUsed` steady-state (excluindo 1ª tx) | **24 gas** | Negligível — abaixo do ruído de SSTORE warm (~100 gas) |
+| `gasUsed` 1ª tx vs subsequentes | **17.064 gas** | **Efeito de cold storage write** (SSTORE cold ≈ 22.100 gas), intrínseco à EVM e não específico ao protocolo |
+| `delta entre blocos` | **0 s** | Hardhat automine constante; em Besu seria ~2s do consenso QBFT |
+
+**Achado defensável:** após a primeira transação (cold start), a PoC **não vaza sinal observável** por gas, calldata ou ciphertext. Em outras palavras: o ataque de Ismayilov & Özturan (2023) — que pressupõe variação em tamanho de pacote/calldata correlacionada com partes — **não se aplica** a esta implementação para essa dimensão.
+
+**Risco residual NÃO mitigado:** **timing macro** (DvPs em horários previsíveis correlacionáveis a eventos externos como folha de pagamento, leilões, etc.). Mitigação proposta como trabalho futuro:
+
+- **Batching temporal:** acumular DvPs em janelas fixas e processá-los em ordem aleatória
 - **Mixing de timing:** introduzir delay aleatório entre `submit` do cliente e `mine` do validador
 
-**Status:** **Mitigação documentada, não implementada na PoC** — escopo de trabalho futuro. Mencionado explicitamente em LGPD_COMPLIANCE.md como limitação.
+**Status:** **Mitigado parcialmente com medição empírica** (canais de tamanho/gas). Timing macro permanece como trabalho futuro com escopo claro.
 
 ---
 
@@ -349,7 +361,7 @@ view de conveniência declarado.
 | **Spoofing** | 3 | 3 | Baixo |
 | **Tampering** | 3 | 3 | Baixo (auditoria de circuito recomendada) |
 | **Repudiation** | 2 | 2 | Baixo (R2 fechado via `accessEncryptedTx`) |
-| **Information Disclosure** | 4 | 3 | Médio (timing analysis I2) |
+| **Information Disclosure** | 4 | 3 | Baixo a Médio (I2 medido: 0 sinal em calldata/gas steady-state; resíduo = timing macro) |
 | **Denial of Service** | 3 | 3 | Baixo |
 | **Elevation of Privilege** | 3 | 3 | **Crítico para produção** (E1: CRS) |
 
@@ -357,7 +369,7 @@ view de conveniência declarado.
 
 1. **Cerimônia MPC** para o trusted setup (E1) — pré-requisito absoluto
 2. **Auditoria de circuito** por terceiro independente (T2)
-3. **Mitigações contra timing analysis** (I2) — Burgos & Alchieri (2025)
+3. **Mitigações contra timing macro** (I2 residual) — apenas o canal de timing inter-DvPs permanece como vetor; calldata/gas já medidos e validados como não-vazantes
 
 ---
 

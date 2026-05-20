@@ -19,7 +19,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       chainId: 31337,
       accounts: {
-        count: 10,
+        count: 50,
         accountsBalance: "10000000000000000000000",
       },
     },
