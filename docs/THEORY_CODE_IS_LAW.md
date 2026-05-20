@@ -51,6 +51,48 @@ Qualquer cidadão pode auditar o `solvency_dvp.zok` no GitHub e **provar matemat
 
 A norma algorítmica é **transparente quanto à sua execução** sem precisar ser transparente quanto aos dados — propriedade essencial para CBDCs em jurisdições com leis de proteção de dados rigorosas como a LGPD.
 
+### 2.4. Método de validação da correspondência norma↔código
+
+A simples afirmação "este `assert` materializa este artigo da LGPD" é, no limite, **uma analogia narrativa**. Para que essa correspondência seja **cientificamente defensável**, ela precisa ser **falsificável** — isto é, deve haver um procedimento explícito capaz, em princípio, de mostrar que ela está errada. Esta subseção propõe um **framework operacional de validação** em quatro critérios. O framework é aplicado, ao final, a três asserts do `solvency_dvp.zok` como exemplo trabalhado.
+
+#### Os quatro critérios
+
+**(C1) Equivalência semântica — o algoritmo cobre a mesma extensão lógica do conceito jurídico?**
+Pergunte: "todo caso aceito pelo algoritmo deve ser aceito juridicamente, e vice-versa?" Se houver caso aceito pelo algoritmo e proibido pela norma (ou o contrário), a correspondência é **incompleta** ou **excedente**. Validação operacional: enumerar pelo menos 3 casos-fronteira e verificar coerência em ambos.
+
+**(C2) Falsificabilidade — existe um caso construível em que norma e algoritmo divergem?**
+Critério inspirado em Popper. Se nenhum cenário pode falsificar a correspondência, ela é tautológica. Validação: tentar construir um caso de divergência; se impossível em todo o domínio de inputs admissíveis, a correspondência é robusta. Se possível, **declarar** o caso e classificá-lo (ruído aceitável, lacuna a corrigir, ou limite estrutural).
+
+**(C3) Auditabilidade externa — o controle é verificável por terceiro sem acesso aos dados privados?**
+Critério inspirado em Cryptolaw (verificabilidade pública). Um regulador, juiz ou pesquisador deve poder inspecionar o circuito + os public inputs e **decidir** se a norma foi observada, **sem** acesso aos witness privados. Se a verificação exige o privado, o controle não materializa a norma — apenas a registra.
+
+**(C4) Reversibilidade — remover o controle algorítmico deixa a operação juridicamente lícita?**
+Teste do nulo. Se sim, o algoritmo é apenas guard-rail técnico, não materialização. Se não — se ao remover o `assert` a operação passa a violar a norma — então o algoritmo é, em sentido forte, **a norma operando**.
+
+#### Aplicação aos asserts do `solvency_dvp.zok`
+
+| Assert | Norma alegada | C1 (equiv. semântica) | C2 (falsificab.) | C3 (auditab. externa) | C4 (reversib.) |
+|---|---|---|---|---|---|
+| `assert(commit(S_A,r_A_old) == commit_A_old)` | Art. 6º VI (transparência) | ✅ todo caso de "knowledge proof do estado anterior" é exigido por transparência; nenhum caso lícito sem ele | ❓ aceitamos como falsificável: se a operação prosseguir sem demonstrar conhecimento do estado, art. 6º VI é violado | ✅ Verificável: o regulador inspeciona o circuito + commits públicos | ✅ Remover este assert permite que partes "transferiram" sem provar conhecer o saldo — opacidade não-conforme |
+| `assert(V != 0)` | Art. 6º III (necessidade) | ⚠️ **lacuna parcial**: art. 6º III é mais amplo que "V≠0" — exige proporcionalidade e adequação, dimensões não capturadas | ✅ falsificável: V=0 é caso onde algoritmo rejeita mas regra de necessidade não explicitamente proíbe (poderia ser ruído) | ✅ Verificável publicamente | ⚠️ Removendo, o sistema processaria operações sem propósito definido — vulnerabilidade, mas não violação direta de uma cláusula específica |
+| `assert(S_A >= V)` | Art. 6º III (necessidade) + Cód. Civil art. 422 (boa-fé) | ✅ "necessidade" + "boa-fé objetiva" exigem que a parte só comprometa o que possui; o `assert` cobre exatamente isso para o caso DvP | ✅ falsificável: cenário onde S_A < V é juridicamente vedado em qualquer leitura aceitável | ✅ Verificável | ✅ Remover este assert permite transferências insolventes — violação direta da boa-fé objetiva |
+
+#### O que o framework revela
+
+Aplicando os quatro critérios sistematicamente, observamos:
+
+- **Asserts de conservação e solvência** (linhas centrais do predicado DvP) passam com folga nos 4 critérios — são **materializações fortes** das normas alegadas
+- **Asserts de necessidade** (V≠0) revelam uma **lacuna parcial declarada**: o algoritmo cobre o caso degenerado mas não esgota a riqueza do princípio jurídico. Honestidade: a "materialização" é **parcial**, não total
+- **Asserts de abertura de commitment** materializam a transparência **sem violar a privacidade** — exatamente o equilíbrio que justifica o paradigma ZK
+
+Esta análise não pretende ser **completa** (LGPD tem dimensões — finalidade, livre acesso, qualidade — que não foram aplicadas a todos os asserts). Pretende ser **honesta sobre o método**: dizer que "X materializa Y" sem expor o método de validação é argumentação por autoridade. Com o framework acima, qualquer leitor crítico pode reproduzir a análise, identificar lacunas que não vimos, e propor refinamentos.
+
+#### Limites do framework
+
+1. **Critérios C1 e C2 dependem de interpretação jurídica.** Não substituem o trabalho hermenêutico do operador do direito; oferecem-lhe um **vocabulário técnico** para discutir a correspondência
+2. **Validação empírica** exigiria revisão por especialistas da ANPD e da academia jurídica — não realizada neste TCC e listada como continuidade
+3. **Frameworks de "Code is Law"** (Lessig, De Filippi & Wright) são predominantemente **descritivos**. Esta proposta é **prescritiva** — um teste para alegações de convergência. Se a contribuição prosperar, pode ser refinada como **método de revisão pré-publicação** para trabalhos que afirmem traduzir lei em código
+
 ---
 
 ## 3. Análise linha-a-linha do circuito `solvency_dvp.zok`
