@@ -98,10 +98,12 @@ Sobe 4 validadores em containers Docker (`besu-network/docker-compose.yml`). A p
 Execuções subsequentes pulam a inicialização (idempotente).
 
 **Validar** (Windows — use o Git Bash explícito; Linux/macOS — `bash` direto):
+
 ```powershell
 & "C:\Program Files\Git\bin\bash.exe" besu-network/wait-for-besu.sh
-# Esperado: "Rede pronta — todos os 4 nos minerando"
 ```
+
+Saída esperada: `Rede pronta — todos os 4 nos minerando`.
 
 ### Etapa 2 — Compilar circuito ZK + trusted setup
 
@@ -118,11 +120,12 @@ Roda `scripts/01_setup_zkp.sh`, que via container ZoKrates 0.8.8:
 > **Aviso:** o trusted setup é **local** — adequado para PoC, **inseguro para produção**. Detalhes em [ADR-0003](ADR/0003-trusted-setup-handling.md).
 
 **Smoke test do circuito (opcional):**
+
 ```bash
 make zkp:test
-# 3 cenários: T1 valid, T2 saldo insuficiente, T3 V=0
-# Esperado: "Smoke test COMPLETO — 3/3 cenarios passaram"
 ```
+
+Cobre 3 cenários (T1 válido, T2 saldo insuficiente, T3 `V=0`). Saída esperada: `Smoke test COMPLETO — 3/3 cenarios passaram`.
 
 ### Etapa 3 — Compilar contratos Solidity
 
@@ -285,10 +288,18 @@ make besu:reset
 
 ### Limpar artefatos de build
 
+Apaga o diretório `circuits/proving_key` inteiro (regerado por `make zkp:setup`).
+
+Linux/macOS:
+
 ```bash
-rm -rf node_modules cache artifacts typechain-types coverage
-rm -rf besu-network/networkFiles
-rm -rf circuits/proving_key/{out,proving.key,verification.key,abi.json,proof.json,witness}
+rm -rf node_modules cache artifacts typechain-types coverage besu-network/networkFiles circuits/proving_key
+```
+
+Windows (PowerShell):
+
+```powershell
+rm -r -fo node_modules,cache,artifacts,typechain-types,coverage,besu-network/networkFiles,circuits/proving_key
 ```
 
 ---
