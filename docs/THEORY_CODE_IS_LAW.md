@@ -51,7 +51,33 @@ Qualquer cidadão pode auditar o `solvency_dvp.zok` no GitHub e **provar matemat
 
 A norma algorítmica é **transparente quanto à sua execução** sem precisar ser transparente quanto aos dados — propriedade essencial para CBDCs em jurisdições com leis de proteção de dados rigorosas como a LGPD.
 
-### 2.4. Método de validação da correspondência norma↔código
+### 2.4. Diálogo com Burgos & Alchieri (2025) — da proposta à implementação
+
+Burgos & Alchieri (2025, arXiv:2501.03391) é a referência mais próxima desta PoC: também propõe uso de zk-SNARKs em blockchain permissionada para liquidação DvP com privacidade, motivada pelo cenário do Drex. **Pontos centrais a registrar:** a proposta deles é **teórica** (Part 1 de uma série declarada), **agnóstica de plataforma**, **agnóstica de consenso**, e **sem medições empíricas** — não publica número de constraints, gas, tempo de prova nem benchmark.
+
+Esta PoC se posiciona como **implementação concreta e mensurada** dessa direção teórica, com escolhas explicitamente justificadas:
+
+| Dimensão | Burgos & Alchieri (2025) | Esta PoC | Justificativa da escolha concreta |
+|---|---|---|---|
+| Esquema zk-SNARK | Proposto Groth16 ou PLONK (não especificado) | **Groth16** (ADR-0001) | Custo on-chain mínimo; precompileds BN128 da EVM; preparado para verifyTx O(1) |
+| Curva elíptica | Não especificada | **BN128 (alt_bn128)** | Única com precompileds EVM nativos (EIP-196/197) — viabiliza verificação em ~264k gas |
+| Commitment | Genérico "hash256" no texto | **Poseidon hash** (ADR-0004) | Otimizado para circuitos ZK; ~150 constraints/commit vs ~50k de SHA-256 |
+| Plataforma blockchain | Agnóstica ("EVM-compatible") | **Hyperledger Besu 24.10.0** (ADR-0002) | Plataforma oficial do piloto Drex/BCB |
+| Consenso | Agnóstico ("consensus-independent") | **QBFT com 4 validadores** | Tolerância bizantina mínima (f=1); alinhado ao piloto Drex |
+| Canal regulador | Mencionado conceitualmente | **ECIES secp256k1 + HKDF + AES-256-GCM** (real) | Implementação testada off/on-chain ponta-a-ponta |
+| Audit trail do acesso | Não tratado | **`accessEncryptedTx` emite evento on-chain** | Não-repúdio do regulador (vetor R2 do STRIDE) |
+| Governança do regulador | Não tratada | **`RegulatorMultiSig` N-of-M** demonstrador | Mitiga ponto de falha único |
+| Crypto-shredding (art. 18 VI LGPD) | Não tratado | **`cryptoShred()` + análise jurídica** (ADR-0005) | Atende interpretação técnica do direito à eliminação |
+| Número de constraints | Não medido | **1.728** (medido em `benchmark/results/results.csv`) | Eleva proposta teórica a evidência empírica |
+| Gas de verificação | Não medido | **264.020** (medido) | RNF02 (< 300k) atendido com folga |
+| Tempo de prova | Não medido | **~1,9s** (mediana de 5 iterações) | RNF01 (< 30s) atendido com folga |
+| Tamanho da prova | Não medido | **256 bytes** | Padrão Groth16 |
+| Análise de canais laterais | Documentado em referência [Ismayilov & Özturan 2023] | **Medido empiricamente** (`scripts/timing_analysis.ts`) — 0 sinal em calldata/gas steady-state | Eleva a discussão de vulnerabilidade conceitual para mensuração defensável |
+| Property-based testing do circuito | Não realizado | **50 cenários aleatórios, 0 contra-exemplos** (`scripts/property_test_circuit.sh`) | Validação além dos casos fixos |
+
+**Como interpretar:** Burgos & Alchieri (2025) propõe **o quê** se quer (DvP privado em blockchain permissionada). Esta PoC propõe **como** se faz, mede **quanto custa**, e identifica **onde ainda há lacunas** (cerimônia MPC, timing macro, selective disclosure ZKP). A relação é de continuidade, não de competição: a teoria deles fornece a justificativa econômico-regulatória, esta PoC fornece a evidência empírica de viabilidade técnica. A monografia desenvolve essa relação como diálogo, não como crítica.
+
+### 2.5. Método de validação da correspondência norma↔código
 
 A simples afirmação "este `assert` materializa este artigo da LGPD" é, no limite, **uma analogia narrativa**. Para que essa correspondência seja **cientificamente defensável**, ela precisa ser **falsificável** — isto é, deve haver um procedimento explícito capaz, em princípio, de mostrar que ela está errada. Esta subseção propõe um **framework operacional de validação** em quatro critérios. O framework é aplicado, ao final, a três asserts do `solvency_dvp.zok` como exemplo trabalhado.
 
