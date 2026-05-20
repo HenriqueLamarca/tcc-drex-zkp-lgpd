@@ -220,6 +220,28 @@ npx hardhat test test/integration/dvp.spec.ts
 
 Executa 8 cenários ponta-a-ponta in-process (sem Besu).
 
+### Property-based testing do circuito
+
+Diferente do smoke test (que valida 3 cenários fixos), este teste gera entradas pseudo-aleatórias em duas categorias — cenários válidos (esperados aceitos pelo circuito) e cenários inválidos (esperados rejeitados) — e mede a proporção de pass/fail. Reporta contra-exemplos se houver.
+
+```bash
+make zkp:property
+```
+
+Variáveis configuráveis (defaults entre parênteses): `ITER_VALID` (30), `ITER_INVALID` (30), `RNG_SEED` (1), `MAX_VALUE` (1_000_000).
+
+Resultado da execução de referência (50 cenários, seed 1): **0 contra-exemplos**. Detalhes em `benchmark/results/property_test_report.txt`.
+
+As 5 estratégias de geração de cenários **inválidos** cobrem:
+
+1. `V == 0` (transferência trivial)
+2. `V > S_A` (insolvência)
+3. `commit_A_old` adulterado (não bate com `S_A, r_A_old`)
+4. Conservação violada (Bob recebe valor extra)
+5. `commit_A_new` com randomness diferente da fornecida no witness
+
+Cobrir todos os assertions do circuito com pelo menos 5 cenários aleatórios cada eleva a defesa de "passou nos 3 testes que escrevemos" para "0 contra-exemplos em N entradas aleatórias do domínio".
+
 ---
 
 ## 5. Lint e qualidade

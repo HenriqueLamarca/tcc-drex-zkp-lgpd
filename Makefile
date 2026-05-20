@@ -57,6 +57,10 @@ zkp\:test:
 	@echo "[zkp] Executando smoke test off-chain..."
 	$(BASH) scripts/02_test_zkp.sh
 
+zkp\:property:
+	@echo "[zkp] Executando property-based testing do circuito..."
+	$(BASH) scripts/property_test_circuit.sh
+
 # ─── Contratos ────────────────────────────────────────────────────────────────
 
 compile:
@@ -124,6 +128,7 @@ help:
 	@echo "  make besu:reset     Reseta rede e volumes"
 	@echo "  make zkp:setup      Compila circuito + trusted setup + exporta Verifier.sol"
 	@echo "  make zkp:test       Smoke test off-chain (prova válida + inválida + V=0)"
+	@echo "  make zkp:property   Property-based testing do circuito (entradas aleatórias)"
 	@echo "  make compile        Compila contratos Solidity"
 	@echo "  make deploy         Deploya contratos na rede Besu"
 	@echo "  make deploy:local   Deploya contratos na Hardhat Network"

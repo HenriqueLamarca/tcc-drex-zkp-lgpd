@@ -1,0 +1,17 @@
+# Property-based test report
+# Generated: 2026-05-20T17:43:40Z
+# Circuit:   circuits/solvency_dvp.zok
+# RNG seed:  1
+
+Cenarios validos:
+  testados:  25
+  aceitos:   25 (100%)
+  rejeitados: 0 (contra-exemplos esperados ser zero)
+
+Cenarios invalidos:
+  testados:    25
+  rejeitados:  25 (100%)
+  aceitos:     0 (contra-exemplos esperados ser zero)
+
+Veredito:
+  OK  — nenhum contra-exemplo em 50 cenarios.
