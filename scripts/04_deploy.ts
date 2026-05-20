@@ -55,6 +55,20 @@ function short(addr: string): string {
 
 async function main(): Promise<void> {
   const signers = await ethers.getSigners();
+  if (signers.length < 2) {
+    pretty.fail(
+      `Apenas ${signers.length} signer(s) disponível(eis) na rede "${network.name}". ` +
+        `São necessários pelo menos 2 (admin + regulador).`
+    );
+    if (network.name === "besu") {
+      pretty.note(
+        "Para a rede besu, exporte a variável BESU_PRIVATE_KEYS com 4 chaves pré-financiadas. " +
+          'Exemplo (PowerShell): $env:BESU_PRIVATE_KEYS="0x...,0x...,0x...,0x..."'
+      );
+      pretty.note("Veja docs/USAGE.md ou docs/REPRODUCIBILITY.md para as chaves de teste.");
+    }
+    process.exit(1);
+  }
   const [admin, regulator] = signers;
 
   pretty.header(

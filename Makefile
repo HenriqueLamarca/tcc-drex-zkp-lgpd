@@ -16,6 +16,11 @@ else
     BASH := bash
 endif
 
+# Chaves privadas pré-financiadas no genesis Besu (besu-network/qbftConfigFile.json).
+# São exclusivas da rede local de teste — JAMAIS usar em mainnet ou ambientes
+# reais. Documentadas em besu-network/README.md.
+export BESU_PRIVATE_KEYS := 0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63,0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3,0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f,0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97
+
 # Executa o pipeline completo: rede → zkp → deploy → demo → benchmark
 all: besu\:up zkp\:setup deploy demo benchmark
 
