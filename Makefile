@@ -3,6 +3,19 @@
 ZOKRATES_IMAGE := zokrates/zokrates:0.8.8
 BESU_COMPOSE  := besu-network/docker-compose.yml
 
+# No Windows, GNU Make usa cmd.exe por padrao — e nele "bash" pode resolver
+# para o WSL (System32\bash.exe), que costuma estar ausente/quebrado.
+# Forcamos o Git Bash como shell de TODAS as recipes (paths 8.3 sem espacos).
+# Linux/macOS: shell padrao (/bin/sh), `bash` normal.
+ifeq ($(OS),Windows_NT)
+    SHELL := C:/PROGRA~1/Git/bin/bash.exe
+    .SHELLFLAGS := -c
+    # Caminho ABSOLUTO do Git Bash — evita que `bash` no PATH resolva para WSL
+    BASH := C:/PROGRA~1/Git/bin/bash.exe
+else
+    BASH := bash
+endif
+
 # Executa o pipeline completo: rede → zkp → deploy → demo → benchmark
 all: besu\:up zkp\:setup deploy demo benchmark
 
@@ -12,7 +25,7 @@ besu\:up:
 	@echo "[besu] Subindo rede QBFT 4 validadores..."
 	docker compose -f $(BESU_COMPOSE) up -d
 	@echo "[besu] Aguardando healthcheck..."
-	@bash besu-network/wait-for-besu.sh
+	@$(BASH) besu-network/wait-for-besu.sh
 
 besu\:down:
 	@echo "[besu] Derrubando rede..."
@@ -27,11 +40,17 @@ besu\:reset:
 
 zkp\:setup:
 	@echo "[zkp] Executando compile + setup + export-verifier..."
-	bash scripts/01_setup_zkp.sh
+	$(BASH) scripts/01_setup_zkp.sh
+	@echo "[zkp] Regerando fixture de teste para a nova CRS..."
+	$(BASH) scripts/03_generate_test_fixtures.sh
+
+zkp\:fixtures:
+	@echo "[zkp] Regerando fixture de teste..."
+	$(BASH) scripts/03_generate_test_fixtures.sh
 
 zkp\:test:
 	@echo "[zkp] Executando smoke test off-chain..."
-	bash scripts/02_test_zkp.sh
+	$(BASH) scripts/02_test_zkp.sh
 
 # ─── Contratos ────────────────────────────────────────────────────────────────
 
