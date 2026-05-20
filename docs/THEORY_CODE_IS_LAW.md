@@ -175,15 +175,26 @@ A doutrina jurídica brasileira (Pinheiro 2020; Doneda 2019) admite que **elimin
 
 A discussão completa, com referência a IMF Fintech Note 2024/004, está em [`docs/ADR/0005-cryptoshredding-vs-art-18-VI.md`](ADR/0005-cryptoshredding-vs-art-18-VI.md).
 
-### 4.3. `RegulatorViewer` — espelho da LC 105/2001
+### 4.3. `RegulatorViewer` — espelha o **princípio** da LC 105/2001
 
 A Lei Complementar 105/2001 regula o **sigilo bancário** no Brasil: os bancos devem manter sigilo, mas devem permitir acesso a autoridades competentes mediante critério legal.
 
-`RegulatorViewer` traduz esse arranjo:
+`RegulatorViewer` traduz **o princípio** desse arranjo (acesso restrito ao regulador autorizado, com auditoria on-chain via `accessEncryptedTx`):
 - Cidadão comum: vê apenas metadados (`getTxMetadata`) — partes envolvidas e bloco
-- Regulador (REGULATOR_ROLE): vê o conteúdo cifrado (`getEncryptedTx`), decifra off-chain com sua chave privada
+- Regulador (REGULATOR_ROLE): vê o conteúdo cifrado (`getEncryptedTx` / `accessEncryptedTx`), decifra off-chain com sua chave privada
 
-Não é um arranjo de "vigilância total" — é exatamente o equilíbrio que a LC 105/2001 estabelece para o sistema bancário tradicional. A diferença é que **aqui o equilíbrio é garantido pela criptografia, não por um termo de cooperação interinstitucional**.
+Não é um arranjo de "vigilância total" — é o equilíbrio (acesso restrito + responsabilização) que a LC 105/2001 estabelece para o sistema bancário tradicional. A diferença é que **aqui parte do equilíbrio é garantido pela criptografia, não por um termo de cooperação interinstitucional**.
+
+#### Limites desta correspondência
+
+A LC 105/2001 não se reduz ao princípio "acesso restrito". O texto legal prevê **mecanismos processuais** que esta PoC **não implementa**:
+
+- **Quebra de sigilo por ordem judicial específica** (art. 1º, §4º): a PoC não tem fluxo de autorização judicial; o `REGULATOR_ROLE` simplesmente acessa quando quer (com a trilha imutável de `RegulatorAccessed`, é verdade, mas sem aprovação prévia)
+- **Comunicação obrigatória ao COAF** em movimentações suspeitas (art. 11, Lei 9.613/1998): nenhum mecanismo de filtro / alerta
+- **Cooperação internacional** e reciprocidade (art. 1º, §4º): fora do escopo
+- **Responsabilização do agente** que vaza (art. 10): a PoC registra o acesso, mas não há penalização automatizada
+
+Por isso a redação correta é "espelha o **princípio**" da LC 105/2001 (acesso restrito ao regulador + trilha de auditoria), **não** "materializa a LC 105/2001". A materialização completa exige integração com o ordenamento jurídico-processual brasileiro — trabalho regulatório-institucional, não puramente técnico.
 
 ### 4.4. `DvPSettlement` — atomicidade como princípio jurídico
 

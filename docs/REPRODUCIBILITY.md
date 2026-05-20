@@ -201,7 +201,7 @@ npm run coverage
 
 `npm test` roda 50 testes (42 unitários + 8 de integração). `npm run coverage` exige cobertura ≥ 80% em todos.
 
-Cobertura esperada (sem contar `Verifier.sol` auto-gerado):
+Cobertura esperada:
 
 ```
 PrivateToken.sol      100% statements / 100% branch  / 100% func / 100% lines
@@ -209,6 +209,8 @@ RegulatorViewer.sol   100% statements / 100% branch  / 100% func / 100% lines
 DvPSettlement.sol     100% statements /  77.78% branch / 100% func / 100% lines
 Total                 100% statements /  92% branch   / 100% func / 100% lines
 ```
+
+> **Limite declarado explicitamente:** os números acima excluem `contracts/Verifier.sol` (configurado via `.solcover.js: skipFiles: ["Verifier.sol"]`). O motivo é metodológico — `Verifier.sol` é **auto-gerado pelo ZoKrates** a partir de `circuits/solvency_dvp.zok`, não é código escrito neste projeto. Sua correção depende da auditoria do próprio ZoKrates (open source, com auditorias publicadas) e dos precompileds BN128 da EVM (especificados em EIP-196/197). Em rigor: a PoC tem **100% de cobertura sobre o código que escreveu**, e zero sobre o gerador automático do verificador — sendo este último coberto indiretamente pelos testes de integração que executam o `verifyTx` real com proof válida e inválida.
 
 ### Teste de integração
 
