@@ -46,6 +46,22 @@ Todos os requisitos não-funcionais foram **validados com folga**:
 | **Node.js** | ≥ 20 LTS | Validado com v20 e v24 |
 | **npm** | ≥ 10 | — |
 | **Git** | ≥ 2.x | Bash incluído via Git for Windows |
+| **GNU Make** | qualquer | Necessário para `make all`. Linux/macOS: já vem. Windows: ver bloco abaixo |
+
+### Instalando o `make` no Windows
+
+O Windows não traz o `make` por padrão. Instale via **winget** (já incluso no Windows 10/11):
+
+```powershell
+winget install ezwinports.make
+```
+
+> **Importante:** o winget instala o binário mas **pode não adicionar ao PATH automaticamente** em todas as versões. Se após instalar `make --version` não funcionar, **feche e reabra o PowerShell**. Se ainda assim falhar, adicione ao PATH manualmente:
+> ```powershell
+> $makeBin = "C:\Users\$env:USERNAME\AppData\Local\Microsoft\WinGet\Packages\ezwinports.make_Microsoft.Winget.Source_8wekyb3d8bbwe\bin"
+> [Environment]::SetEnvironmentVariable("Path", "$makeBin;$([Environment]::GetEnvironmentVariable('Path','User'))", "User")
+> ```
+> Feche e reabra o terminal após executar. Alternativas: `choco install make` (Chocolatey) ou `scoop install make` (Scoop).
 
 > **Rust e ZoKrates CLI NÃO são necessários** — toda a parte ZK roda via container `zokrates/zokrates:0.8.8`.
 
@@ -55,12 +71,16 @@ Todos os requisitos não-funcionais foram **validados com folga**:
 
 ## Reprodução completa em < 10 minutos
 
+Clone, instale dependências e execute o pipeline completo:
+
 ```bash
 git clone https://github.com/HenriqueLamarca/tcc-drex-zkp-lgpd.git
 cd tcc-drex-zkp-lgpd
-npm ci                # ~2 min
-make all              # ~5 min: rede + setup + deploy + demo + benchmark
+npm ci
+make all
 ```
+
+Tempos esperados: `npm ci` leva ~2 min; `make all` (rede + setup + deploy + demo + benchmark) leva ~5 min.
 
 Detalhes em [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) (10 seções, com troubleshooting).
 

@@ -14,8 +14,16 @@
 | **npm** | ≥ 10 | `npm --version` | Acompanha o Node |
 | **Git** | ≥ 2.x | `git --version` | — |
 | **Git Bash** | (incluso no Git) | `& "C:\Program Files\Git\bin\bash.exe" --version` | Scripts `.sh` rodam no Git Bash |
+| **GNU Make** | qualquer | `make --version` | Necessário para `make all`. Windows: `winget install ezwinports.make` (depois ver nota abaixo) |
 
 > **Rust e ZoKrates CLI NÃO são necessários.** Toda a parte de ZoKrates roda via container Docker oficial `zokrates/zokrates:0.8.8`.
+
+> **Windows — `make` não aparece após `winget install`:** o instalador winget pode não adicionar o binário ao PATH automaticamente. Feche e reabra o PowerShell. Se ainda assim falhar:
+> ```powershell
+> $makeBin = "C:\Users\$env:USERNAME\AppData\Local\Microsoft\WinGet\Packages\ezwinports.make_Microsoft.Winget.Source_8wekyb3d8bbwe\bin"
+> [Environment]::SetEnvironmentVariable("Path", "$makeBin;$([Environment]::GetEnvironmentVariable('Path','User'))", "User")
+> ```
+> Feche e reabra o terminal após executar.
 
 > **Windows — atenção aos scripts `.sh`:** digitar `bash <script>` no PowerShell
 > pode invocar o **WSL** (que pode estar ausente ou quebrado, gerando erros
@@ -50,9 +58,11 @@ Node:   v24.15.0
 ```bash
 git clone https://github.com/HenriqueLamarca/tcc-drex-zkp-lgpd.git
 cd tcc-drex-zkp-lgpd
-npm ci                # ~2 min
-make all              # ~5 min
+npm ci
+make all
 ```
+
+Tempos esperados: `npm ci` ~2 min, `make all` ~5 min.
 
 `make all` executa em sequência:
 
@@ -128,13 +138,20 @@ Compila 4 contratos com `viaIR: true` (necessário pelo tamanho do `executeDvP`)
 
 ### Etapa 4 — Deploy
 
+Para a **rede Besu** (precisa estar rodando), exporte as chaves pré-financiadas e rode o deploy:
+
 ```bash
-# Para a rede Besu (precisa estar rodando):
 export BESU_PRIVATE_KEYS="0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63,0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3,0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f,0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97"
 make deploy
+```
 
-# Ou para um nó Hardhat local:
-npx hardhat node &        # em outro terminal
+Alternativa para um **nó Hardhat local** — abra outro terminal com o nó rodando e depois execute o deploy local:
+
+```bash
+npx hardhat node
+```
+
+```bash
 make deploy:local
 ```
 
@@ -142,10 +159,16 @@ Saída: `deployments/<network>.json` com endereços dos 4 contratos.
 
 ### Etapa 5 — Cenário DvP ponta-a-ponta
 
+Contra a rede Besu:
+
 ```bash
-make demo            # contra rede Besu
-# ou
-make demo:local      # contra Hardhat node
+make demo
+```
+
+Ou contra o Hardhat node:
+
+```bash
+make demo:local
 ```
 
 Executa o cenário T1: Alice (S_A=100) transfere V=30 para Bob (S_B=50). Saída em JSON estruturado **sem nenhum saldo em plaintext** (validar com `jq`).
@@ -172,9 +195,11 @@ Mede tempo de geração de prova (5 iterações, mediana), gas de verificação 
 ### Testes unitários + cobertura
 
 ```bash
-npm test                         # 50 testes (42 unitários + 8 de integração)
-npm run coverage                 # cobertura ≥ 80% em todos
+npm test
+npm run coverage
 ```
+
+`npm test` roda 50 testes (42 unitários + 8 de integração). `npm run coverage` exige cobertura ≥ 80% em todos.
 
 Cobertura esperada (sem contar `Verifier.sol` auto-gerado):
 
@@ -189,19 +214,20 @@ Total                 100% statements /  92% branch   / 100% func / 100% lines
 
 ```bash
 npx hardhat test test/integration/dvp.spec.ts
-# 8 cenários ponta-a-ponta in-process (sem Besu)
 ```
+
+Executa 8 cenários ponta-a-ponta in-process (sem Besu).
 
 ---
 
 ## 5. Lint e qualidade
 
 ```bash
-npm run lint                     # Solidity (solhint) + TypeScript (eslint)
-npm run typecheck                # tsc --noEmit
+npm run lint
+npm run typecheck
 ```
 
-Esperado: **zero warnings**.
+`npm run lint` cobre Solidity (solhint) + TypeScript (eslint). `npm run typecheck` é `tsc --noEmit`. Esperado: **zero warnings**.
 
 ---
 
@@ -223,9 +249,14 @@ Cobertura mínima exigida: **80%** (RNF03). Falha o build se < 80%.
 
 ### Derrubar a rede Besu
 
+`make besu:down` preserva chaves + blockchain; `make besu:reset` apaga os volumes e força re-init na próxima subida.
+
 ```bash
-make besu:down                   # preserva chaves + blockchain
-make besu:reset                  # apaga volumes (forca re-init na proxima)
+make besu:down
+```
+
+```bash
+make besu:reset
 ```
 
 ### Limpar artefatos de build
@@ -270,10 +301,12 @@ A rede Besu tem state persistente. Se você re-roda o demo após mudanças, faç
 ```bash
 make besu:reset
 make besu:up
-make zkp:setup           # se Verifier.sol mudou, precisa re-deploy
+make zkp:setup
 make deploy
 make demo
 ```
+
+Se o `Verifier.sol` foi alterado (qualquer execução de `make zkp:setup` gera uma nova CRS), o redeploy é obrigatório — o passo `make deploy` acima cuida disso.
 
 ### Benchmark em Linux/macOS difere muito da máquina de referência
 
