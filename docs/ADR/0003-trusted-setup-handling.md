@@ -82,6 +82,19 @@ Etapas mínimas:
    - Documentação dos critérios de seleção de participantes (idoneidade, diversidade jurisdicional, expertise técnica)
    - Procedimento publicado de revogação caso comprometimento seja detectado
 
+### Demonstrador: cerimônia MPC simulada
+
+Para evidenciar que a arquitetura suporta o caminho descrito acima, a PoC
+inclui `scripts/simulated_mpc_ceremony.sh` (atalho: `make zkp:ceremony`)
+que executa uma cerimônia Phase 2 **real** do Groth16 via `zokrates mpc
+init / contribute / beacon / verify / export`, usando a Phase 1 pública
+da Perpetual Powers of Tau (Hez/iden3). A cerimônia tem 2 contribuintes
+simulados + random beacon e produz uma CRS distinta da gerada pelo setup
+local — comprovado por comparação SHA-256 das `verification.key`. O
+limite explícito é que os contribuintes rodam no mesmo processo (i.e.,
+falha a hipótese de independência adversarial real). Detalhes e
+limitações em `docs/CEREMONY_SIMULATION.md`.
+
 ### Alternativa: migrar para esquema universal
 
 PLONK e Halo2 usam setup **universal e atualizável** — uma única cerimônia serve para circuitos arbitrários e pode ser estendida indefinidamente sem cerimônia nova por circuito. Avaliado em **ADR-0001** (Groth16 vs PLONK vs STARK) e descartado por overhead de gas significativamente maior na PoC (~5x). Para produção, esta troca pode ser reavaliada.

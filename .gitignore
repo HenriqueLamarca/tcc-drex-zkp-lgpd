@@ -14,6 +14,8 @@ circuits/out.r1cs
 circuits/abi.json
 circuits/verification.key
 circuits/*.wtns
+circuits/ceremony/
+circuits/ptau/
 
 # Verifier gerado — versionado somente após setup
 # contracts/Verifier.sol

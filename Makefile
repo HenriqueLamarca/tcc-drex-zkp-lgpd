@@ -61,6 +61,10 @@ zkp\:property:
 	@echo "[zkp] Executando property-based testing do circuito..."
 	$(BASH) scripts/property_test_circuit.sh
 
+zkp\:ceremony:
+	@echo "[zkp] Executando cerimonia MPC simulada (2 contribuintes + beacon)..."
+	$(BASH) scripts/simulated_mpc_ceremony.sh
+
 # ─── Contratos ────────────────────────────────────────────────────────────────
 
 compile:
@@ -129,6 +133,7 @@ help:
 	@echo "  make zkp:setup      Compila circuito + trusted setup + exporta Verifier.sol"
 	@echo "  make zkp:test       Smoke test off-chain (prova válida + inválida + V=0)"
 	@echo "  make zkp:property   Property-based testing do circuito (entradas aleatórias)"
+	@echo "  make zkp:ceremony   Cerimônia MPC simulada — Phase 2 (2 contribuintes + beacon)"
 	@echo "  make compile        Compila contratos Solidity"
 	@echo "  make deploy         Deploya contratos na rede Besu"
 	@echo "  make deploy:local   Deploya contratos na Hardhat Network"
