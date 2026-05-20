@@ -65,12 +65,13 @@ A análise considera o **trust boundary** completo:
 
 **Mitigação:**
 - AccessControl da OpenZeppelin: o papel só é concedido por `DEFAULT_ADMIN_ROLE`, garantido por `_grantRole` no constructor
-- Em produção, recomendado:
-  - **Multi-sig** (3 de 5) para concessão de `REGULATOR_ROLE`
-  - **Time-lock** de 7 dias antes de qualquer concessão entrar em vigor
-  - **Auditoria pública** via evento `RoleGranted` (já emitido pela OZ AccessControl)
+- **Demonstrador de produção implementado:** `contracts/RegulatorMultiSig.sol` substitui a EOA única do REGULATOR_ROLE por uma multi-sig N-of-M. Os testes (`test/unit/RegulatorMultiSig.spec.ts`) provam que o multisig **consegue executar `cryptoShred`** quando atinge o threshold (2-of-3 no exemplo) e **falha** com apenas uma assinatura. Para usar em produção: deploy do `RegulatorMultiSig`, depois `token.grantRole(REGULATOR_ROLE, multisig.address)` em vez de uma EOA
+- Em produção (extensões não-implementadas):
+  - **Time-lock** de 7 dias antes da execução, permitindo veto por minoria
+  - **Rotação de membros** via meta-governança (proposta do próprio multisig sobre si mesmo)
+  - **Auditoria pública** via evento `RoleGranted` (já emitido pela OZ AccessControl) + eventos do multisig
 
-**Status:** **Mitigado** na PoC; **plano de fortalecimento documentado** para produção.
+**Status:** **Mitigado** + demonstrador de produção funcional no repositório.
 
 ---
 
@@ -256,8 +257,9 @@ view de conveniência declarado.
 - Rotação periódica da chave (com necessidade de re-cifrar histórico ou aceitar perda)
 - Multi-party key generation (Shamir Secret Sharing 3 de 5)
 - Monitoramento de uso anômalo
+- **Limita o impacto via `RegulatorMultiSig`**: mesmo que a chave de UM membro seja comprometida, atacante precisa comprometer M chaves independentes (threshold do multisig). Reduz o "raio de explosão" do vazamento de uma única chave
 
-**Status:** **Mitigação parcial** na PoC (chave em texto plano em ambiente de teste); fortalecimento crítico para produção.
+**Status:** **Mitigação parcial** na PoC (chave em texto plano em ambiente de teste); demonstrador `RegulatorMultiSig` reduz drasticamente o impacto de comprometimento de uma única chave; HSM e rotação como fortalecimento crítico para produção.
 
 ---
 

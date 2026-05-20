@@ -71,8 +71,9 @@ flowchart TB
 | **`DvPSettlement.sol`** | Orquestra a transação atômica: verify → update commitments → record audit | `lastDvPBlock[payer]` para rate limit |
 | **`PrivateToken.sol`** | Armazena commitments e expõe operações de mint/update/shred | `commitments[address] -> bytes32` |
 | **`RegulatorViewer.sol`** | Armazena blobs cifrados para o regulador | `_records[txId] -> EncryptedRecord` (privado), `txCount` |
+| **`RegulatorMultiSig.sol`** *(demonstrador opcional)* | Multi-sig N-of-M que pode receber `REGULATOR_ROLE` em vez de uma EOA, eliminando o ponto de falha único | Estado N owners + M threshold + lista de propostas |
 
-Detalhes das responsabilidades, eventos e validações estão nos próprios contratos (cada função tem comentário NatSpec com referência ao artigo LGPD que materializa) e em [`docs/THEORY_CODE_IS_LAW.md`](THEORY_CODE_IS_LAW.md) (análise jurídica linha-a-linha).
+Detalhes das responsabilidades, eventos e validações estão nos próprios contratos (cada função tem comentário NatSpec com referência ao artigo LGPD que materializa) e em [`docs/THEORY_CODE_IS_LAW.md`](THEORY_CODE_IS_LAW.md) (análise jurídica linha-a-linha). O `RegulatorMultiSig` é um **demonstrador de produção** — não está no fluxo padrão do `make demo` para manter a apresentação simples, mas tem cobertura de testes completa em `test/unit/RegulatorMultiSig.spec.ts` e provas operacionais de que **substitui** a EOA do regulador sem alterar a interface dos demais contratos.
 
 ### Camada 3 — Regulador off-chain
 
