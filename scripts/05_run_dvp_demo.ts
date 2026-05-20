@@ -51,8 +51,14 @@ interface Deployment {
   regulator: string;
 }
 
+import * as pretty from "./_pretty";
+
 function log(payload: Record<string, unknown>): void {
-  console.log(JSON.stringify(payload));
+  pretty.json(payload);
+}
+
+function short(addr: string): string {
+  return addr.slice(0, 6) + "…" + addr.slice(-4);
 }
 
 async function main(): Promise<void> {
@@ -76,6 +82,10 @@ async function main(): Promise<void> {
   const signers = await ethers.getSigners();
   const [admin, regulator, alice, bob] = signers;
 
+  pretty.header(
+    `Demo DvP — PoC DREX-ZKP-LGPD   (rede: ${network.name})`,
+    `Pagador: ${short(alice.address)} (Alice)   →   Recebedor: ${short(bob.address)} (Bob)`
+  );
   log({
     event: "demo_start",
     network: network.name,
@@ -103,6 +113,7 @@ async function main(): Promise<void> {
   const aliceCommitNew = uintToBytes32(fixture.inputs.commitANew);
   const bobCommitNew = uintToBytes32(fixture.inputs.commitBNew);
 
+  pretty.step(1, 6, "Carregando deployment + prova ZK (fixture)");
   log({ event: "fixture_loaded", scenario: "T1_valid" });
 
   // ─── Mint inicial (idempotente — pula se ja' minted) ───────────────────────
@@ -111,20 +122,26 @@ async function main(): Promise<void> {
   if (aliceCurrent === ZERO) {
     log({ event: "minting", account: alice.address });
     await (await token.connect(admin).mint(alice.address, aliceCommitOld)).wait();
+    pretty.step(2, 6, "Registrando saldo inicial de Alice (commitment Poseidon)");
   } else if (aliceCurrent !== aliceCommitOld) {
     throw new Error(
       `Alice tem commitment incompativel on-chain. Atual: ${aliceCurrent}, esperado: ${aliceCommitOld}. Resete a rede ou use outras contas.`
     );
+  } else {
+    pretty.step(2, 6, "Saldo de Alice ja registrado (idempotente)");
   }
 
   const bobCurrent = await token.commitments(bob.address);
   if (bobCurrent === ZERO) {
     log({ event: "minting", account: bob.address });
     await (await token.connect(admin).mint(bob.address, bobCommitOld)).wait();
+    pretty.step(3, 6, "Registrando saldo inicial de Bob (commitment Poseidon)");
   } else if (bobCurrent !== bobCommitOld) {
     throw new Error(
       `Bob tem commitment incompativel on-chain. Atual: ${bobCurrent}, esperado: ${bobCommitOld}.`
     );
+  } else {
+    pretty.step(3, 6, "Saldo de Bob ja registrado (idempotente)");
   }
 
   // ─── Cifra payload real para o regulador (ECIES secp256k1) ─────────────────
@@ -136,10 +153,13 @@ async function main(): Promise<void> {
     value: "30",
     timestamp: new Date().toISOString(),
   });
+  const cipherBytes = (ciphertext.length - 2) / 2;
+  pretty.step(4, 6, "Cifrando payload de auditoria (ECIES secp256k1)");
+  pretty.info("tamanho do blob cifrado", `${cipherBytes} bytes`);
   log({
     event: "ciphertext_prepared",
     scheme: "ECIES(secp256k1 + HKDF + AES-256-GCM)",
-    bytes: (ciphertext.length - 2) / 2,
+    bytes: cipherBytes,
   });
 
   // ─── Executa DvP ───────────────────────────────────────────────────────────
@@ -157,6 +177,10 @@ async function main(): Promise<void> {
 
   if (!receipt) throw new Error("Transacao sem receipt");
 
+  pretty.step(5, 6, "DvP submetido e minerado on-chain");
+  pretty.info("tx hash", tx.hash.slice(0, 10) + "…" + tx.hash.slice(-8));
+  pretty.info("bloco", receipt.blockNumber);
+  pretty.info("gas consumido", receipt.gasUsed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
   log({
     event: "dvp_mined",
     txHash: tx.hash,
@@ -181,6 +205,7 @@ async function main(): Promise<void> {
     );
   }
 
+  pretty.step(6, 6, "Verificando estado pós-transação (commitments atualizados)");
   log({
     event: "state_verified",
     commitmentsUpdated: true,
@@ -190,11 +215,15 @@ async function main(): Promise<void> {
   // ─── Regulador acessa audit trail pela via AUDITAVEL ───────────────────────
   // accessEncryptedTx emite RegulatorAccessed (trilha imutavel on-chain de
   // quem acessou o que e quando) — fecha o vetor R2 do THREAT_MODEL.
+  pretty.section("Trilha de auditoria do regulador (LC 105/2001)");
   const auditRecord = await viewer
     .connect(regulator)
     .accessEncryptedTx.staticCall(lastTxId);
   const accessTx = await viewer.connect(regulator).accessEncryptedTx(lastTxId);
   const accessReceipt = await accessTx.wait();
+  pretty.success("Regulador acessa via accessEncryptedTx → emite RegulatorAccessed on-chain");
+  pretty.info("acesso registrado no bloco", accessReceipt!.blockNumber);
+  pretty.info("tx do acesso", accessTx.hash.slice(0, 10) + "…" + accessTx.hash.slice(-8));
   log({
     event: "regulator_accessed_audit",
     txId: lastTxId.toString(),
@@ -217,6 +246,12 @@ async function main(): Promise<void> {
     decrypted.to === bob.address &&
     typeof decrypted.value === "string" &&
     decrypted.value.length > 0;
+  if (roundtripOk) {
+    pretty.success("Regulador decifra o blob ECIES off-chain — roundtrip verificado");
+    pretty.note("(valor recuperado não é impresso aqui — preserva RNF06)");
+  } else {
+    pretty.fail("Roundtrip ECIES falhou");
+  }
   log({
     event: "regulator_decrypted_offchain",
     scheme: "ECIES(secp256k1 + HKDF + AES-256-GCM)",
@@ -226,6 +261,16 @@ async function main(): Promise<void> {
   });
 
   // ─── Resumo final ──────────────────────────────────────────────────────────
+  const gasFmt = receipt.gasUsed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  pretty.done("✓  Demo concluída — privacidade preservada", [
+    `Rede:           ${network.name}`,
+    `Tx hash:        ${tx.hash.slice(0, 10)}…${tx.hash.slice(-8)}`,
+    `Bloco:          ${receipt.blockNumber}`,
+    `Gas (executeDvP completo):  ${gasFmt}`,
+    ``,
+    `Privacidade:    nenhum saldo nem valor transferido aparece neste log.`,
+    `Auditoria:      regulador acessou (on-chain) e decifrou (off-chain).`,
+  ]);
   log({
     event: "demo_complete",
     network: network.name,
@@ -246,5 +291,6 @@ async function main(): Promise<void> {
 main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
   log({ event: "demo_failed", error: message });
+  pretty.fail(`Demo falhou: ${message}`);
   process.exitCode = 1;
 });

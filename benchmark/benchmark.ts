@@ -27,6 +27,7 @@ import {
   mockCiphertext,
 } from "../test/fixtures/helpers";
 import { deployFullStack } from "../test/fixtures/deployStack";
+import * as pretty from "../scripts/_pretty";
 import {
   PrivateToken,
   DvPSettlement,
@@ -48,7 +49,11 @@ interface Row {
 }
 
 function log(payload: Record<string, unknown>): void {
-  console.log(JSON.stringify(payload));
+  pretty.json(payload);
+}
+
+function fmt(n: number | bigint): string {
+  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 function runDocker(cmd: string): void {
@@ -189,8 +194,6 @@ async function measureExecuteDvPGas(
 async function main(): Promise<void> {
   fs.mkdirSync(RESULTS_DIR, { recursive: true });
 
-  log({ event: "benchmark_start", iterations: ITERATIONS });
-
   // ─── Specs da maquina ──────────────────────────────────────────────────────
   const cpus = os.cpus();
   const cpuModel = cpus.length > 0 ? cpus[0].model : "unknown";
@@ -198,12 +201,21 @@ async function main(): Promise<void> {
   const platform = `${os.type()} ${os.release()}`;
   const nodeVersion = process.version;
 
+  pretty.header(
+    `Benchmark — PoC DREX-ZKP-LGPD`,
+    `Máquina: ${cpuModel} | ${ramGB} GB RAM | ${platform}`
+  );
+  log({ event: "benchmark_start", iterations: ITERATIONS });
+
   // ─── 1. Constraints (estatico) ─────────────────────────────────────────────
+  pretty.step(1, 4, "Lendo número de constraints do circuito");
   log({ event: "step", name: "constraints" });
   const constraints = readConstraintsCount();
+  pretty.info("constraints", fmt(constraints));
   log({ event: "result", constraints });
 
   // ─── 2. Tempo de prova (5 iteracoes, mediana) ──────────────────────────────
+  pretty.step(2, 4, `Medindo tempo de prova off-chain (${ITERATIONS} iterações)`);
   log({ event: "step", name: "proof_generation_timing", iterations: ITERATIONS });
   const witnessTimes: number[] = [];
   const proofTimes: number[] = [];
@@ -211,6 +223,7 @@ async function main(): Promise<void> {
     const { witnessMs, proofMs } = computeWitnessAndProof();
     witnessTimes.push(witnessMs);
     proofTimes.push(proofMs);
+    pretty.note(`iteração ${i + 1}/${ITERATIONS}  witness=${witnessMs}ms  proof=${proofMs}ms`);
     log({ event: "iteration", i: i + 1, witnessMs, proofMs });
   }
   const medianWitness = median(witnessTimes);
@@ -220,14 +233,18 @@ async function main(): Promise<void> {
   const proofBytes = proofSizeBytes();
 
   // ─── 4. Gas on-chain ───────────────────────────────────────────────────────
+  pretty.step(3, 4, "Deployando stack e medindo gas on-chain");
   log({ event: "step", name: "deploy_stack" });
   const { verifier, token, dvp } = await deployFullStack();
 
   log({ event: "step", name: "verify_tx_gas" });
   const verifyGas = await measureVerifyTxGas(verifier);
+  pretty.info("verifyTx (BN128 precompileds)", `${fmt(verifyGas)} gas`);
 
   log({ event: "step", name: "execute_dvp_gas" });
   const dvpGas = await measureExecuteDvPGas(token, dvp);
+  pretty.info("executeDvP completo", `${fmt(dvpGas)} gas`);
+  pretty.step(4, 4, "Gerando CSV de resultados");
 
   // ─── 5. Monta CSV ──────────────────────────────────────────────────────────
   const rows: Row[] = [
@@ -311,10 +328,31 @@ async function main(): Promise<void> {
   });
   log({ event: "csv_written", file: CSV_FILE });
   log({ event: "benchmark_complete" });
+
+  // Resumo final amigavel
+  const totalOff = medianWitness + medianProof;
+  const rnf01ok = totalOff < 30000;
+  const rnf02ok = verifyGas < 300000n;
+  pretty.section("Resultados (mediana de " + ITERATIONS + " iterações)");
+  pretty.info("constraints do circuito", fmt(constraints));
+  pretty.info("tamanho da prova", `${proofBytes} bytes`);
+  pretty.info("witness (off-chain)", `${fmt(medianWitness)} ms`);
+  pretty.info("generate-proof (off-chain)", `${fmt(medianProof)} ms`);
+  pretty.info("TOTAL off-chain", `${fmt(totalOff)} ms`);
+  pretty.info("verifyTx gas (on-chain)", `${fmt(verifyGas)}`);
+  pretty.info("executeDvP completo", `${fmt(dvpGas)} gas`);
+
+  pretty.done("✓  Benchmark concluído — RNFs validados", [
+    `RNF01 prova < 30s:     ${rnf01ok ? "✓ OK" : "✗ FALHOU"}   (medido: ${fmt(totalOff)} ms)`,
+    `RNF02 verify < 300k:   ${rnf02ok ? "✓ OK" : "✗ FALHOU"}   (medido: ${fmt(verifyGas)} gas)`,
+    ``,
+    `CSV completo:  ${CSV_FILE}`,
+  ]);
 }
 
 main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
   log({ event: "benchmark_failed", error: message });
+  pretty.fail(`Benchmark falhou: ${message}`);
   process.exitCode = 1;
 });

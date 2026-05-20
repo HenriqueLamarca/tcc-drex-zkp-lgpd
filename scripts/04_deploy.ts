@@ -43,14 +43,24 @@ interface DeploymentRecord {
   rolesGranted: Array<{ contract: string; role: string; account: string }>;
 }
 
+import * as pretty from "./_pretty";
+
 function log(payload: Record<string, unknown>): void {
-  console.log(JSON.stringify(payload));
+  pretty.json(payload);
+}
+
+function short(addr: string): string {
+  return addr.slice(0, 6) + "…" + addr.slice(-4);
 }
 
 async function main(): Promise<void> {
   const signers = await ethers.getSigners();
   const [admin, regulator] = signers;
 
+  pretty.header(
+    `Deploy dos contratos da PoC — rede: ${network.name}`,
+    `Deployer: ${short(admin.address)}   |   Regulador: ${short(regulator.address)}`
+  );
   log({ event: "deploy_start", network: network.name, deployer: admin.address });
 
   // ─── 1. Verifier ───────────────────────────────────────────────────────────
@@ -58,6 +68,8 @@ async function main(): Promise<void> {
   const verifier = (await VerifierFactory.deploy()) as unknown as Verifier;
   await verifier.waitForDeployment();
   const verifierAddr = await verifier.getAddress();
+  pretty.step(1, 4, "Verifier.sol (verificador Groth16)");
+  pretty.info("endereço", short(verifierAddr));
   log({ event: "deployed", contract: "Verifier", address: verifierAddr });
 
   // ─── 2. PrivateToken ───────────────────────────────────────────────────────
@@ -67,6 +79,8 @@ async function main(): Promise<void> {
   )) as unknown as PrivateToken;
   await token.waitForDeployment();
   const tokenAddr = await token.getAddress();
+  pretty.step(2, 4, "PrivateToken.sol (cofre de commitments)");
+  pretty.info("endereço", short(tokenAddr));
   log({ event: "deployed", contract: "PrivateToken", address: tokenAddr });
 
   // ─── 3. RegulatorViewer ────────────────────────────────────────────────────
@@ -77,6 +91,8 @@ async function main(): Promise<void> {
   )) as unknown as RegulatorViewer;
   await viewer.waitForDeployment();
   const viewerAddr = await viewer.getAddress();
+  pretty.step(3, 4, "RegulatorViewer.sol (trilha cifrada do regulador)");
+  pretty.info("endereço", short(viewerAddr));
   log({ event: "deployed", contract: "RegulatorViewer", address: viewerAddr });
 
   // ─── 4. DvPSettlement ──────────────────────────────────────────────────────
@@ -89,9 +105,12 @@ async function main(): Promise<void> {
   )) as unknown as DvPSettlement;
   await dvp.waitForDeployment();
   const dvpAddr = await dvp.getAddress();
+  pretty.step(4, 4, "DvPSettlement.sol (orquestrador atômico)");
+  pretty.info("endereço", short(dvpAddr));
   log({ event: "deployed", contract: "DvPSettlement", address: dvpAddr });
 
   // ─── 5. Concede SETTLEMENT_ROLE ────────────────────────────────────────────
+  pretty.section("Concedendo papéis (AccessControl)");
   const tokenSettlementRole = await token.SETTLEMENT_ROLE();
   const viewerSettlementRole = await viewer.SETTLEMENT_ROLE();
   const minterRole = await token.MINTER_ROLE();
@@ -101,6 +120,7 @@ async function main(): Promise<void> {
   await (
     await token.connect(admin).grantRole(tokenSettlementRole, dvpAddr)
   ).wait();
+  pretty.success(`PrivateToken → SETTLEMENT_ROLE para DvPSettlement`);
   rolesGranted.push({
     contract: "PrivateToken",
     role: "SETTLEMENT_ROLE",
@@ -110,6 +130,7 @@ async function main(): Promise<void> {
   await (
     await viewer.connect(admin).grantRole(viewerSettlementRole, dvpAddr)
   ).wait();
+  pretty.success(`RegulatorViewer → SETTLEMENT_ROLE para DvPSettlement`);
   rolesGranted.push({
     contract: "RegulatorViewer",
     role: "SETTLEMENT_ROLE",
@@ -117,6 +138,7 @@ async function main(): Promise<void> {
   });
 
   await (await token.connect(admin).grantRole(minterRole, admin.address)).wait();
+  pretty.success(`PrivateToken → MINTER_ROLE para o admin`);
   rolesGranted.push({
     contract: "PrivateToken",
     role: "MINTER_ROLE",
@@ -152,10 +174,18 @@ async function main(): Promise<void> {
 
   log({ event: "deploy_complete", file: outFile });
   log({ event: "summary", ...record });
+
+  pretty.done("✓  Deploy concluído com sucesso", [
+    `Rede:        ${network.name}  (chainId ${chainId})`,
+    `Bloco:       ${blockNumber}`,
+    `Contratos:   4   |   Papéis concedidos: ${rolesGranted.length}`,
+    `Endereços salvos em:  deployments/${network.name}.json`,
+  ]);
 }
 
 main().catch((error: unknown) => {
   const message = error instanceof Error ? error.message : String(error);
   log({ event: "deploy_failed", error: message });
+  pretty.fail(`Deploy falhou: ${message}`);
   process.exitCode = 1;
 });
