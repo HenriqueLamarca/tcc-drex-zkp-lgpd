@@ -248,9 +248,45 @@ async function main(): Promise<void> {
     decrypted.value.length > 0;
   if (roundtripOk) {
     pretty.success("Regulador decifra o blob ECIES off-chain — roundtrip verificado");
-    pretty.note("(valor recuperado não é impresso aqui — preserva RNF06)");
   } else {
     pretty.fail("Roundtrip ECIES falhou");
+  }
+
+  // ─── Comprovante visual emitido pelo regulador ─────────────────────────────
+  // Os saldos antes/depois vêm do witness-data.json (visão privilegiada do
+  // regulador, reconstruída off-chain a partir do blob ECIES + histórico).
+  // ON-CHAIN só existem os 4 commitments Poseidon. RNF06 preservado: este
+  // comprovante NÃO é emitido por nenhum contrato — é produzido na máquina
+  // do regulador depois que ele aplicou sua chave privada.
+  if (roundtripOk) {
+    const witnessFile = path.join(__dirname, "..", "test", "fixtures", "witness-data.json");
+    const witness = JSON.parse(fs.readFileSync(witnessFile, "utf-8")) as {
+      private_inputs: { S_A: string; S_B: string; V: string; S_A_new: string; S_B_new: string };
+    };
+    const block = await ethers.provider.getBlock(receipt.blockNumber);
+    const blockTs = block ? new Date(block.timestamp * 1000).toISOString() : new Date().toISOString();
+    pretty.receipt({
+      txHash: tx.hash,
+      blockNumber: receipt.blockNumber,
+      timestamp: blockTs,
+      network: network.name,
+      gasUsed: receipt.gasUsed.toString(),
+      from: {
+        label: "Alice",
+        address: alice.address,
+        balanceBefore: witness.private_inputs.S_A,
+        balanceAfter: witness.private_inputs.S_A_new,
+      },
+      to: {
+        label: "Bob",
+        address: bob.address,
+        balanceBefore: witness.private_inputs.S_B,
+        balanceAfter: witness.private_inputs.S_B_new,
+      },
+      value: witness.private_inputs.V,
+      commitmentsBefore: { from: aliceCommitOld, to: bobCommitOld },
+      commitmentsAfter:  { from: aliceCommitNew, to: bobCommitNew },
+    });
   }
   log({
     event: "regulator_decrypted_offchain",
@@ -268,8 +304,8 @@ async function main(): Promise<void> {
     `Bloco:          ${receipt.blockNumber}`,
     `Gas (executeDvP completo):  ${gasFmt}`,
     ``,
-    `Privacidade:    nenhum saldo nem valor transferido aparece neste log.`,
-    `Auditoria:      regulador acessou (on-chain) e decifrou (off-chain).`,
+    `Privacidade:    on-chain só há hashes Poseidon (ver commitments acima).`,
+    `Auditoria:      regulador decifrou off-chain → comprovante acima.`,
   ]);
   log({
     event: "demo_complete",

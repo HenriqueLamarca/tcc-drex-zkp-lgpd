@@ -98,6 +98,99 @@ export function done(title: string, lines: string[]): void {
 }
 
 /**
+ * Comprovante visual da transação — emulando o que o regulador veria
+ * após decifrar o blob ECIES off-chain. Mostra valores em claro porque
+ * representa a visão privilegiada do regulador (LC 105/2001), NÃO algo
+ * que apareça on-chain. Preserva a tese: a chain só tem hashes; este
+ * recibo só existe porque o regulador usou sua chave privada.
+ */
+export interface ReceiptData {
+  txHash: string;
+  blockNumber: number | bigint;
+  timestamp: string;
+  network: string;
+  gasUsed: string | bigint;
+  from: { label: string; address: string; balanceBefore: string; balanceAfter: string };
+  to:   { label: string; address: string; balanceBefore: string; balanceAfter: string };
+  value: string;
+  commitmentsBefore: { from: string; to: string };
+  commitmentsAfter: { from: string; to: string };
+}
+
+function rowKV(k: string, v: string, innerWidth: number): string {
+  const left = `  ${k}`;
+  const right = v;
+  const space = Math.max(2, innerWidth - left.length - right.length - 2);
+  return `${left}${" ".repeat(space)}${right}  `;
+}
+
+function shortHash(h: string, head = 10, tail = 8): string {
+  if (h.length <= head + tail + 1) return h;
+  return `${h.slice(0, head)}…${h.slice(-tail)}`;
+}
+
+export function receipt(data: ReceiptData): void {
+  if (!PRETTY) return;
+  const INNER = WIDTH - 2;
+  const line = "═".repeat(INNER);
+  const sep  = "─".repeat(INNER);
+  const blank = " ".repeat(INNER);
+
+  const draw = (content: string) => {
+    // Usa cor magenta nas bordas; pad respeitando ANSI dentro de content.
+    console.log(`${C.magenta}║${C.reset}${pad(content, INNER)}${C.magenta}║${C.reset}`);
+  };
+
+  console.log("");
+  console.log(`${C.magenta}╔${line}╗${C.reset}`);
+  // Cabeçalho
+  draw(pad(`  ${C.bold}COMPROVANTE DE LIQUIDAÇÃO — DvP DREX (visão do regulador)${C.reset}`, INNER));
+  draw(blank);
+  draw(`  ${C.dim}Emitido após decifragem ECIES do blob de auditoria.${C.reset}`);
+  draw(`  ${C.dim}Os valores abaixo NÃO aparecem on-chain — só o regulador, com${C.reset}`);
+  draw(`  ${C.dim}sua chave privada, consegue produzir este comprovante.${C.reset}`);
+  console.log(`${C.magenta}╠${sep}╣${C.reset}`);
+
+  // Dados da transação
+  draw(`  ${C.bold}TRANSAÇÃO${C.reset}`);
+  draw(rowKV("Rede",       data.network,                                 INNER));
+  draw(rowKV("Tx hash",    shortHash(data.txHash),                        INNER));
+  draw(rowKV("Bloco",      String(data.blockNumber),                      INNER));
+  draw(rowKV("Timestamp",  data.timestamp,                                INNER));
+  draw(rowKV("Gas",        String(data.gasUsed).replace(/\B(?=(\d{3})+(?!\d))/g, "."), INNER));
+  draw(blank);
+
+  // Pagador
+  draw(`  ${C.bold}PAGADOR (${data.from.label})${C.reset}`);
+  draw(rowKV("Endereço",       shortHash(data.from.address, 8, 6),       INNER));
+  draw(rowKV("Saldo anterior", `${data.from.balanceBefore} DREX`,         INNER));
+  draw(rowKV("Valor enviado",  `${C.red}- ${data.value} DREX${C.reset}`, INNER));
+  draw(rowKV("Saldo atual",    `${C.bold}${data.from.balanceAfter} DREX${C.reset}`, INNER));
+  draw(blank);
+
+  // Recebedor
+  draw(`  ${C.bold}RECEBEDOR (${data.to.label})${C.reset}`);
+  draw(rowKV("Endereço",        shortHash(data.to.address, 8, 6),         INNER));
+  draw(rowKV("Saldo anterior",  `${data.to.balanceBefore} DREX`,           INNER));
+  draw(rowKV("Valor recebido",  `${C.green}+ ${data.value} DREX${C.reset}`, INNER));
+  draw(rowKV("Saldo atual",     `${C.bold}${data.to.balanceAfter} DREX${C.reset}`, INNER));
+  draw(blank);
+
+  console.log(`${C.magenta}╠${sep}╣${C.reset}`);
+  // Commitments — o que a chain de fato armazena
+  draw(`  ${C.bold}COMMITMENTS Poseidon (o que está on-chain)${C.reset}`);
+  draw(rowKV("Pagador  antes",   shortHash(data.commitmentsBefore.from, 14, 8), INNER));
+  draw(rowKV("Pagador  depois",  shortHash(data.commitmentsAfter.from,  14, 8), INNER));
+  draw(rowKV("Recebedor antes",  shortHash(data.commitmentsBefore.to,   14, 8), INNER));
+  draw(rowKV("Recebedor depois", shortHash(data.commitmentsAfter.to,    14, 8), INNER));
+  draw(blank);
+  draw(`  ${C.dim}↑ Hashes Poseidon: irreversíveis sem a randomness do dono.${C.reset}`);
+  draw(`  ${C.dim}   A LGPD (art. 5º XI) considera dado anonimizado.${C.reset}`);
+
+  console.log(`${C.magenta}╚${line}╝${C.reset}`);
+}
+
+/**
  * Linha JSON estruturada (modo máquina). No modo pretty, é silenciosa.
  * Use para preservar a saída parseável quando LOG_FORMAT=json.
  */
