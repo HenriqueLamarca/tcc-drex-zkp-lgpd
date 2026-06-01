@@ -199,13 +199,17 @@ async function main(): Promise<void> {
 
 main()
   .then(() => {
-    // Sai explicitamente com 0 — workaround libuv/Windows
-    // (Assertion failed: !(handle->flags & UV_HANDLE_CLOSING))
-    process.exit(0);
+    // Workaround libuv/Windows: o provider Hardhat/ethers v6 mantem sockets
+    // HTTP keep-alive abertos para o nó Besu. Chamar process.exit(0) de forma
+    // síncrona dispara, na mesma raia, o teardown desses handles — o que
+    // produz "Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)".
+    // Cedemos um tick do event loop (setImmediate) e damos uma janela curta
+    // (50 ms) para os keep-alive fecharem graciosamente antes do exit.
+    setTimeout(() => process.exit(0), 50);
   })
   .catch((error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
     log({ event: "deploy_failed", error: message });
     pretty.fail(`Deploy falhou: ${message}`);
-    process.exit(1);
+    setTimeout(() => process.exit(1), 50);
   });

@@ -326,15 +326,15 @@ async function main(): Promise<void> {
 
 main()
   .then(() => {
-    // Sai explicitamente com 0 — workaround para bug de libuv no Windows
-    // (Assertion failed: !(handle->flags & UV_HANDLE_CLOSING) src/win/async.c)
-    // que dispara no teardown do provider Hardhat/ethers e gera exit code
-    // != 0 mesmo quando a demo concluiu com sucesso.
-    process.exit(0);
+    // Workaround libuv/Windows — ver comentario em scripts/04_deploy.ts.
+    // setTimeout(..., 50) deixa o provider HTTP keep-alive do ethers v6
+    // fechar graciosamente antes do process.exit, evitando o assert
+    // "!(handle->flags & UV_HANDLE_CLOSING)" no Windows.
+    setTimeout(() => process.exit(0), 50);
   })
   .catch((error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
     log({ event: "demo_failed", error: message });
     pretty.fail(`Demo falhou: ${message}`);
-    process.exit(1);
+    setTimeout(() => process.exit(1), 50);
   });
