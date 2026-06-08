@@ -202,15 +202,16 @@ npm test
 npm run coverage
 ```
 
-`npm test` roda 50 testes (42 unitários + 8 de integração). `npm run coverage` exige cobertura ≥ 80% em todos.
+`npm test` roda 63 testes (42 unitários + 8 de integração + 13 do RegulatorMultiSig). `npm run coverage` exige cobertura ≥ 80% em todos.
 
 Cobertura esperada:
 
 ```
-PrivateToken.sol      100% statements / 100% branch  / 100% func / 100% lines
-RegulatorViewer.sol   100% statements / 100% branch  / 100% func / 100% lines
+PrivateToken.sol      100% statements / 100% branch   / 100% func / 100% lines
+RegulatorViewer.sol   100% statements / 100% branch   / 100% func / 100% lines
 DvPSettlement.sol     100% statements /  77.78% branch / 100% func / 100% lines
-Total                 100% statements /  92% branch   / 100% func / 100% lines
+RegulatorMultiSig.sol 100% statements /  88.10% branch / 100% func / 100% lines
+Total                 100% statements /  90.22% branch / 100% func / 100% lines
 ```
 
 > **Limite declarado explicitamente:** os números acima excluem `contracts/Verifier.sol` (configurado via `.solcover.js: skipFiles: ["Verifier.sol"]`). O motivo é metodológico — `Verifier.sol` é **auto-gerado pelo ZoKrates** a partir de `circuits/solvency_dvp.zok`, não é código escrito neste projeto. Sua correção depende da auditoria do próprio ZoKrates (open source, com auditorias publicadas) e dos precompileds BN128 da EVM (especificados em EIP-196/197). Em rigor: a PoC tem **100% de cobertura sobre o código que escreveu**, e zero sobre o gerador automático do verificador — sendo este último coberto indiretamente pelos testes de integração que executam o `verifyTx` real com proof válida e inválida.
@@ -373,7 +374,7 @@ Após `make all`, verifique:
 - [ ] `deployments/besu.json` existe e contém 4 endereços
 - [ ] `benchmark/results/results.csv` existe
 - [ ] CSV contém 4 linhas de operação + cabeçalho com specs
-- [ ] `npm test` retorna 50 passing
+- [ ] `npm test` retorna 63 passing
 - [ ] `npm run coverage` mostra ≥ 80%
 - [ ] `npm run lint` sem warnings
 
