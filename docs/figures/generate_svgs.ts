@@ -292,6 +292,58 @@ function generateBarChartSVG(opts: BarChartOptions): string {
   return svgWrap(W, H, content);
 }
 
+// ─── Diagrama: Fluxo de execucao da transferencia ──────────────────────────
+
+function generateFlowSVG(): string {
+  const W = 920;
+  const H = 520;
+  const x = 160;
+  const w = 600;
+  const tx = 180;
+
+  function box(y: number, h: number, kind: string, title: string, lines: string[]): string {
+    const fill = kind === "off" ? "#fef3c7" : "#eef4fb";
+    const stroke = kind === "off" ? "#d97706" : "#1f3a5f";
+    let t = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="8" ry="8" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>`;
+    t += `<text x="${tx}" y="${y + 22}" font-size="12" font-weight="bold" fill="#1a1a1a">${title}</text>`;
+    lines.forEach((ln, i) => {
+      t += `<text x="${tx}" y="${y + 44 + i * 19}" font-size="11" fill="#333">${ln}</text>`;
+    });
+    return t;
+  }
+  function arrow(y1: number, y2: number): string {
+    return `<line x1="460" y1="${y1}" x2="460" y2="${y2}" class="arrow"/>`;
+  }
+
+  const content = `
+  <text x="460" y="32" text-anchor="middle" class="title">Fluxo de execucao da transferencia (entrega contra pagamento)</text>
+  <text x="460" y="52" text-anchor="middle" class="subtitle">Amarelo: fora da cadeia (cliente / regulador)   |   Azul: na cadeia (Hyperledger Besu, QBFT)</text>
+  ${box(72, 92, "off", "Momento 0 - Cliente (fora da cadeia)", [
+    "Calcula os compromissos Poseidon do saldo",
+    "Gera a prova Groth16 (valida a operacao sem revelar valores)",
+    "Cifra os dados de auditoria com ECIES para o regulador",
+  ])}
+  ${arrow(164, 184)}
+  ${box(184, 50, "on", "Momento 1 - Registro inicial: mint (PrivateToken)", [
+    "Grava os compromissos iniciais na cadeia (apenas hashes)",
+  ])}
+  ${arrow(234, 254)}
+  ${box(254, 150, "on", "Momento 2 - executeDvP: transacao atomica (DvPSettlement)", [
+    "1. Verifier valida a prova on-chain (precompileds BN128)",
+    "2. Confere se os compromissos atuais batem com a prova",
+    "3. Atualiza os compromissos: a transferencia se efetiva",
+    "4. RegulatorViewer armazena o blob cifrado (ECIES)",
+    "5. Emite eventos, sem expor valores",
+  ])}
+  ${arrow(404, 424)}
+  ${box(424, 72, "off", "Momento 3 - Auditoria: regulador (fora da cadeia)", [
+    "accessEncryptedTx emite o evento RegulatorAccessed (trilha)",
+    "Decifra o blob com a chave privada e obtem os valores reais",
+  ])}`;
+
+  return svgWrap(W, H, content);
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 function main(): void {
@@ -357,6 +409,10 @@ function main(): void {
     })
   );
   console.log("Generated: benchmark_constraints.svg");
+
+  // 6. Fluxo de execucao da transferencia
+  fs.writeFileSync(path.join(OUT_DIR, "transfer_flow.svg"), generateFlowSVG());
+  console.log("Generated: transfer_flow.svg");
 
   console.log("\nTodos os SVGs gerados em " + OUT_DIR);
 }
