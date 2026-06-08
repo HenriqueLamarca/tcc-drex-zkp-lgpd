@@ -133,13 +133,12 @@ Detalhes em [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) (10 seções, c
 | [0005](docs/ADR/0005-cryptoshredding-vs-art-18-VI.md) | Crypto-shredding como mitigação ao conflito imutabilidade × art. 18 VI |
 
 ### Diagramas (em `docs/figures/`)
-- `architecture.svg` — componentes da arquitetura
-- `dvp_sequence.svg` — sequência da transação DvP ponta-a-ponta
-- `benchmark_proof_time.svg` — tempo de prova vs RNF01
-- `benchmark_gas.svg` — gas on-chain vs RNF02
-- `benchmark_constraints.svg` — características do circuito
-
-Regenerar: `npx ts-node docs/figures/generate_svgs.ts`
+- `architecture.png` — componentes da arquitetura
+- `dvp_sequence.png` — sequência da transação DvP ponta-a-ponta
+- `transfer_flow.png` — fluxo de execução da transferência
+- `benchmark_proof_time.png` — tempo de prova vs RNF01
+- `benchmark_gas.png` — gas on-chain vs RNF02
+- `benchmark_constraints.png` — características do circuito
 
 ---
 

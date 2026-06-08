@@ -186,9 +186,10 @@ Entregas:
 Entregas:
 - `docs/THEORY_CODE_IS_LAW.md` — conexão explícita entre Cryptolaw (Almedina), cada requisito LGPD e o circuito ZoKrates; papel do LIFT Lab / LAB / CRIA; limites do "Code is Law" per IMF Fintech Note 2024/004
 - `docs/ARCHITECTURE.md` — descrição textual dos componentes
-- `docs/figures/architecture.svg` — diagrama de componentes
-- `docs/figures/dvp_sequence.svg` — diagrama de sequência da transação DvP
-- `docs/figures/benchmark_*.svg` — gráficos do CSV
+- `docs/figures/architecture.png` — diagrama de componentes
+- `docs/figures/dvp_sequence.png` — diagrama de sequência da transação DvP
+- `docs/figures/transfer_flow.png` — fluxo de execução da transferência
+- `docs/figures/benchmark_*.png` — gráficos do CSV
 - `docs/USAGE.md` — guia prático de operação (comandos do dia a dia)
 - `README.md` final — permite reprodução completa em < 10 minutos a partir de clone limpo
 - `make all` executa: `besu:up` → `zkp:setup` → `deploy` → `demo` → `benchmark` (RNF04)
