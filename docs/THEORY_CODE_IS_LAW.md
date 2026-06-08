@@ -2,7 +2,7 @@
 
 > **TCC** — Privacidade em Sistemas Financeiros Distribuídos: Uso de Zero-Knowledge Proofs e Smart Contracts para Conformidade com a LGPD
 > **Autor:** Henrique Lamarca | **Orientador:** Tassio Ferenzini Martins Sirqueira | **Período:** 2026/1
-> **Âncora teórica:** Lopes, F. et al. *Cryptolaw: Inovação, Direito e Desenvolvimento*. Almedina.
+> **Âncora teórica:** Costa, I. S. da; Prado, V. M. *Cryptolaw: Inovação, Direito e Desenvolvimento*. São Paulo: Almedina, 2021.
 
 ---
 
@@ -23,7 +23,7 @@
 
 Lawrence Lessig formulou em *Code and Other Laws of Cyberspace* (1999) a tese de que **"código é lei"** — no ciberespaço, a arquitetura técnica regula comportamentos com a mesma força que normas jurídicas tradicionais. Vinte e cinco anos depois, essa tese encontra sua expressão mais radical nas blockchains permissionadas que sustentam **Central Bank Digital Currencies (CBDCs)**, em particular no projeto piloto do **Drex** conduzido pelo Banco Central do Brasil.
 
-A obra *Cryptolaw: Inovação, Direito e Desenvolvimento* (Lopes et al., Almedina) atualiza esta discussão ao propor o conceito de **"norma algorítmica"** — um corpo de regras computáveis que, ao serem executadas pela máquina, **produzem efeitos jurídicos equivalentes** aos de uma norma legal. Diferente do `Code is Law` de Lessig (descritivo: o código *já é* uma forma de regulação), a norma algorítmica é **prescritiva e intencional**: cabe ao legislador, ao regulador e ao desenvolvedor desenhar o algoritmo de modo que ele *materialize* o conteúdo da norma jurídica.
+A obra *Cryptolaw: Inovação, Direito e Desenvolvimento* (Costa e Prado, 2021, Almedina) atualiza esta discussão ao propor o conceito de **"norma algorítmica"** — um corpo de regras computáveis que, ao serem executadas pela máquina, **produzem efeitos jurídicos equivalentes** aos de uma norma legal. Diferente do `Code is Law` de Lessig (descritivo: o código *já é* uma forma de regulação), a norma algorítmica é **prescritiva e intencional**: cabe ao legislador, ao regulador e ao desenvolvedor desenhar o algoritmo de modo que ele *materialize* o conteúdo da norma jurídica.
 
 Esta PoC é um exercício prático dessa convergência. Cada linha do circuito ZoKrates, cada `assert` do contrato Solidity, cada papel de AccessControl, é uma **tradução operacional** de um dispositivo da Lei Geral de Proteção de Dados (Lei 13.709/2018) — não como referência simbólica em comentários, mas como **restrição executiva** que a EVM aplica em cada bloco minerado.
 
@@ -396,7 +396,7 @@ A obra *Cryptolaw* (Almedina) defende esta convergência em termos abstratos. Es
 - **ANPD (2024)**. *Guia de Anonimização*. Versão 1.0. Brasília.
 - **Doneda, D. (2019)**. *Da Privacidade à Proteção de Dados Pessoais: fundamentos da Lei Geral de Proteção de Dados*. Thomson Reuters Brasil.
 - **Pinheiro, P. P. (2020)**. *Proteção de Dados Pessoais: Comentários à Lei n. 13.709/2018*. Saraiva.
-- **Lopes, F. et al.** *Cryptolaw: Inovação, Direito e Desenvolvimento*. Almedina.
+- **Costa, I. S. da; Prado, V. M. (2021)**. *Cryptolaw: Inovação, Direito e Desenvolvimento*. São Paulo: Almedina.
 
 ### Teoria do "Code is Law" e regulação algorítmica
 
