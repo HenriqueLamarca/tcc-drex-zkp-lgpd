@@ -70,3 +70,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Sentinela de sucesso das etapas do Makefile (Windows libuv workaround)
+.make_step.ok

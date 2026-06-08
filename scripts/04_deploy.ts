@@ -199,17 +199,17 @@ async function main(): Promise<void> {
 
 main()
   .then(() => {
-    // Workaround libuv/Windows: o provider Hardhat/ethers v6 mantem sockets
-    // HTTP keep-alive abertos para o nó Besu. Chamar process.exit(0) de forma
-    // síncrona dispara, na mesma raia, o teardown desses handles — o que
-    // produz "Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)".
-    // Cedemos um tick do event loop (setImmediate) e damos uma janela curta
-    // (50 ms) para os keep-alive fecharem graciosamente antes do exit.
-    setTimeout(() => process.exit(0), 50);
+    // Sinaliza sucesso por arquivo-sentinela ANTES do exit. No Windows, o
+    // teardown do provider Hardhat/ethers pode disparar um assert do libuv
+    // ("!(handle->flags & UV_HANDLE_CLOSING)") que sobrescreve o codigo de
+    // saida. O Makefile confere este sentinela em vez do exit code, tornando
+    // a deteccao de sucesso deterministica e independente do crash de teardown.
+    try { fs.writeFileSync(".make_step.ok", "deploy"); } catch {}
+    process.exit(0);
   })
   .catch((error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
     log({ event: "deploy_failed", error: message });
     pretty.fail(`Deploy falhou: ${message}`);
-    setTimeout(() => process.exit(1), 50);
+    process.exit(1);
   });

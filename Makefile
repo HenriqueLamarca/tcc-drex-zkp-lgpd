@@ -73,7 +73,9 @@ compile:
 
 deploy:
 	@echo "[hardhat] Deployando na rede Besu..."
-	npm run deploy
+	@rm -f .make_step.ok
+	@npm run deploy || true
+	@if [ -f .make_step.ok ]; then rm -f .make_step.ok; else echo "[make] deploy falhou (sem sentinela de sucesso)"; exit 1; fi
 
 deploy\:local:
 	@echo "[hardhat] Deployando na Hardhat Network..."
@@ -83,7 +85,9 @@ deploy\:local:
 
 demo:
 	@echo "[demo] Executando cenário DvP ponta-a-ponta..."
-	npm run dvp:demo
+	@rm -f .make_step.ok
+	@npm run dvp:demo || true
+	@if [ -f .make_step.ok ]; then rm -f .make_step.ok; else echo "[make] demo falhou (sem sentinela de sucesso)"; exit 1; fi
 
 demo\:local:
 	@echo "[demo] Executando cenário DvP na Hardhat Network..."
@@ -109,7 +113,9 @@ coverage:
 
 benchmark:
 	@echo "[benchmark] Executando benchmark e gerando CSV..."
-	npm run benchmark
+	@rm -f .make_step.ok
+	@npm run benchmark || true
+	@if [ -f .make_step.ok ]; then rm -f .make_step.ok; else echo "[make] benchmark falhou (sem sentinela de sucesso)"; exit 1; fi
 
 # ─── Qualidade de código ──────────────────────────────────────────────────────
 

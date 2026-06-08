@@ -350,9 +350,15 @@ async function main(): Promise<void> {
   ]);
 }
 
-main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  log({ event: "benchmark_failed", error: message });
-  pretty.fail(`Benchmark falhou: ${message}`);
-  process.exitCode = 1;
-});
+main()
+  .then(() => {
+    // Sinaliza sucesso por arquivo-sentinela antes do exit (ver scripts/04_deploy.ts).
+    try { fs.writeFileSync(".make_step.ok", "benchmark"); } catch {}
+    process.exit(0);
+  })
+  .catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    log({ event: "benchmark_failed", error: message });
+    pretty.fail(`Benchmark falhou: ${message}`);
+    process.exit(1);
+  });

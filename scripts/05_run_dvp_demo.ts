@@ -326,15 +326,13 @@ async function main(): Promise<void> {
 
 main()
   .then(() => {
-    // Workaround libuv/Windows — ver comentario em scripts/04_deploy.ts.
-    // setTimeout(..., 50) deixa o provider HTTP keep-alive do ethers v6
-    // fechar graciosamente antes do process.exit, evitando o assert
-    // "!(handle->flags & UV_HANDLE_CLOSING)" no Windows.
-    setTimeout(() => process.exit(0), 50);
+    // Sinaliza sucesso por arquivo-sentinela antes do exit (ver 04_deploy.ts).
+    try { fs.writeFileSync(".make_step.ok", "demo"); } catch {}
+    process.exit(0);
   })
   .catch((error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
     log({ event: "demo_failed", error: message });
     pretty.fail(`Demo falhou: ${message}`);
-    setTimeout(() => process.exit(1), 50);
+    process.exit(1);
   });
