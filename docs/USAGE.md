@@ -78,7 +78,8 @@ npx hardhat node
 ```powershell
 cd C:\Projetos\TCC
 npx hardhat run scripts/04_deploy.ts --network localhost
-npx hardhat run scripts/05_run_dvp_demo.ts --network localhost
+npx hardhat run scripts/05_run_dvp_demo.ts --network localhost        # sucesso
+npx hardhat run scripts/06_run_dvp_demo_fail.ts --network localhost   # rejeicao
 ```
 
 ### Opção B — Rede Besu QBFT real (fiel ao DREX)
@@ -93,8 +94,13 @@ Definir as chaves pré-financiadas e rodar:
 ```powershell
 $env:BESU_PRIVATE_KEYS="0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63,0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3,0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f,0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97"
 npx hardhat run scripts/04_deploy.ts --network besu
-npx hardhat run scripts/05_run_dvp_demo.ts --network besu
+npx hardhat run scripts/05_run_dvp_demo.ts --network besu        # sucesso
+npx hardhat run scripts/06_run_dvp_demo_fail.ts --network besu   # rejeicao
 ```
+
+> Os mesmos cenários têm atalhos via Make: `make demo` (sucesso), `make demo:fail`
+> (rejeição) e `make demo:both` (os dois em sequência). As demos são re-executáveis
+> quantas vezes quiser, sem precisar resetar a rede.
 
 Desligar a rede ao terminar:
 ```powershell
@@ -128,8 +134,27 @@ valor transferido (30) aparece em plaintext nos logs.
 ```powershell
 make all
 ```
-Executa em sequência: `besu:up` → `zkp:setup` → `deploy` → `demo` → `benchmark`.
+Executa em sequência: `besu:up` → `zkp:setup` → `deploy` → `demo` → `demo:fail` → `benchmark`.
 Requer `make` instalado; sem ele, executar as seções 3B + 4 manualmente.
+
+---
+
+## 7. Painel visual (recomendado para apresentação)
+
+Um único comando sobe a rede Besu, prepara o circuito e abre um painel no navegador,
+onde os cenários são executados por botões (cada botão roda o script real do projeto):
+
+```powershell
+make viz:up
+```
+
+Abre `http://localhost:4173`. Na inicialização, o terminal mostra `Chaves Besu
+carregadas: 4` — se aparecer, está tudo certo. No navegador, use os botões na ordem:
+**Deploy → Liquidação válida → Liquidação inválida → Benchmark**. A liquidação
+inválida resulta em um badge vermelho de rejeição (comportamento esperado de segurança).
+
+Se a rede já estiver no ar, `make viz` abre só o painel. Caso a porta 4173 esteja
+ocupada por um painel anterior, encerre-o (`Ctrl + C`) antes de abrir outro.
 
 ---
 
@@ -142,8 +167,11 @@ Requer `make` instalado; sem ele, executar as seções 3B + 4 manualmente.
 | Testar o circuito ZK | `& "C:\Program Files\Git\bin\bash.exe" scripts/02_test_zkp.sh` |
 | Rede local rápida | Seção 3, Opção A |
 | Rede Besu QBFT | Seção 3, Opção B |
+| Demonstrar liquidação aceita | `make demo` |
+| Demonstrar liquidação rejeitada | `make demo:fail` |
 | Medir performance | `npm run benchmark` |
 | Validar privacidade | Seção 5 |
+| Apresentar com painel visual | `make viz:up` (Seção 7) |
 | Tudo de uma vez | `make all` |
 
 ---

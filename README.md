@@ -80,9 +80,19 @@ npm ci
 make all
 ```
 
-Tempos esperados: `npm ci` leva ~2 min; `make all` (rede + setup + deploy + demo + benchmark) leva ~5 min.
+Tempos esperados: `npm ci` leva ~2 min; `make all` (rede + setup + deploy + demo + demo:fail + benchmark) leva ~5 min.
 
-Detalhes em [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) (10 seções, com troubleshooting).
+Detalhes em [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) (com troubleshooting).
+
+### Painel visual (recomendado para apresentação)
+
+Um único comando sobe a rede, prepara o circuito e abre um painel no navegador, onde os cenários são executados por botões (execução real dos scripts):
+
+```bash
+make viz:up
+```
+
+Abre `http://localhost:4173`. Use os botões na ordem: **Deploy → Liquidação válida → Liquidação inválida → Benchmark**.
 
 ---
 
@@ -96,14 +106,17 @@ Detalhes em [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) (10 seções, c
 | `make zkp:setup` | Compila circuito + trusted setup + gera Verifier.sol |
 | `make zkp:test` | Smoke test off-chain do circuito (3 cenários) |
 | `npm run compile` | Compila contratos Solidity |
-| `npm test` | 50 testes (42 unitários + 8 de integração) |
+| `npm test` | 63 testes (42 unitários + 8 de integração + 13 do RegulatorMultiSig) |
 | `npm run coverage` | Cobertura (mínimo 80%) |
 | `npm run lint` | Solidity (solhint) + TypeScript (eslint) |
 | `make deploy` | Deploy na rede Besu (precisa estar rodando) |
 | `make deploy:local` | Deploy na Hardhat Network |
-| `make demo` | Cenário DvP ponta-a-ponta na Besu |
-| `make demo:local` | Demo na Hardhat Network |
-| `npm run benchmark` | Mede tempo, gas, tamanho — gera CSV |
+| `make demo` | Cenário DvP de sucesso (liquidação aceita) na Besu |
+| `make demo:fail` | Cenário de rejeição (liquidação inválida revertida) na Besu |
+| `make demo:both` | Roda os dois cenários (sucesso + rejeição) em sequência |
+| `make benchmark` | Mede tempo, gas, tamanho — gera CSV |
+| `make viz:up` | **Painel visual**: sobe rede + circuito e abre o navegador |
+| `make viz` | Só abre o painel (rede já no ar) |
 
 ---
 
@@ -147,19 +160,20 @@ Detalhes em [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) (10 seções, c
 ```
 .
 ├── circuits/                  Circuito ZoKrates + setup (proving_key/ gitignored)
-├── contracts/                 PrivateToken, DvPSettlement, RegulatorViewer, Verifier
-├── scripts/                   01_setup_zkp, 02_test_zkp, 03_fixtures, 04_deploy, 05_demo
+├── contracts/                 PrivateToken, DvPSettlement, RegulatorViewer, RegulatorMultiSig, Verifier
+├── scripts/                   01_setup_zkp, 02_test_zkp, 03_fixtures, 04_deploy, 05_demo, 06_demo_fail, run_step
 ├── test/
-│   ├── unit/                  42 testes unitários
-│   ├── integration/           8 testes E2E in-process
+│   ├── unit/                  testes unitários (inclui RegulatorMultiSig)
+│   ├── integration/           testes E2E in-process
 │   └── fixtures/              Helpers + proof fixtures
 ├── benchmark/                 Script + results.csv
 ├── besu-network/              Hyperledger Besu QBFT (4 nós) via docker-compose
+├── viz/                       Painel visual (server.cjs + index.html) — make viz:up
 ├── docs/
 │   ├── ARCHITECTURE.md, THEORY_CODE_IS_LAW.md, LGPD_COMPLIANCE.md
 │   ├── THREAT_MODEL.md, REPRODUCIBILITY.md, USAGE.md
 │   ├── ADR/                   5 registros de decisão arquitetural
-│   └── figures/               Diagramas SVG + script gerador
+│   └── figures/               Diagramas em PNG
 ├── deployments/               Endereços dos contratos por rede (gitignored)
 ├── .github/workflows/ci.yml   Pipeline de CI (lint + typecheck + test + coverage)
 ├── hardhat.config.ts, Makefile, package.json, README.md, PLAN.md

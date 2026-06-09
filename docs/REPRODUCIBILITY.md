@@ -67,15 +67,16 @@ Tempos esperados: `npm ci` ~2 min, `make all` ~5 min.
 `make all` executa em sequência:
 
 ```
-besu:up   →   zkp:setup   →   deploy   →   demo   →   benchmark
-   ↓             ↓               ↓           ↓           ↓
- Sobe 4      Compila +      Deploya 4   Executa     Mede tempo,
- nós Besu    setup +        contratos   cenário     gas, prova
- (~30s)      Verifier.sol   na Besu     E2E         e gera CSV
-             (~10s)         (~20s)      (~5s)       (~30s)
+besu:up  →  zkp:setup  →  deploy  →  demo  →  demo:fail  →  benchmark
+   ↓            ↓            ↓         ↓          ↓             ↓
+ Sobe 4    Compila +    Deploya 4  Liquidação  Liquidação   Mede tempo,
+ nós Besu  setup +      contratos  válida      inválida     gas, prova
+ (~30s)    Verifier     na Besu    (aceita)    (rejeitada)  e gera CSV
 ```
 
 Saída esperada ao final: `benchmark/results/results.csv` populado.
+
+> **Apresentação visual:** para a banca, `make viz:up` faz o mesmo preparo (rede + circuito) e abre um painel no navegador (`http://localhost:4173`) onde deploy, liquidações e benchmark são executados por botões. Ver Etapa 7.
 
 ---
 
@@ -174,7 +175,17 @@ Ou contra o Hardhat node:
 make demo:local
 ```
 
-Executa o cenário T1: Alice (S_A=100) transfere V=30 para Bob (S_B=50). Saída em JSON estruturado **sem nenhum saldo em plaintext** (validar com `jq`).
+Executa o cenário T1: Alice (S_A=100) transfere V=30 para Bob (S_B=50). Saída em JSON estruturado **sem nenhum saldo em plaintext** (validar com `jq`). A demo usa partes efêmeras a cada execução, então é **re-executável** sem precisar resetar a rede.
+
+### Etapa 5.1 — Cenário de rejeição (liquidação inválida)
+
+Demonstra que a rede **recusa** uma liquidação sem prova de solvência válida:
+
+```bash
+make demo:fail
+```
+
+A operação é revertida com `InvalidProof` e o estado on-chain permanece inalterado. Para rodar os dois cenários em sequência: `make demo:both`.
 
 ### Etapa 6 — Benchmark
 
@@ -190,6 +201,16 @@ Mede tempo de geração de prova (5 iterações, mediana), gas de verificação 
 - Verify gas: **~260k** (RNF02: < 300k)
 - Prova: 256 bytes
 - executeDvP completo: ~500k gas
+
+### Etapa 7 — Painel visual (apresentação)
+
+Para apresentar os cenários de forma visual, um único comando sobe a rede, prepara o circuito e abre um painel no navegador:
+
+```bash
+make viz:up
+```
+
+Abre `http://localhost:4173`. O terminal mostra `Chaves Besu carregadas: 4` ao iniciar. No painel, os botões executam os scripts reais do projeto: **Deploy**, **Liquidação válida** (badge verde), **Liquidação inválida** (badge vermelho de rejeição) e **Benchmark**. Se a rede já estiver no ar, `make viz` abre apenas o painel.
 
 ---
 
@@ -332,7 +353,7 @@ make besu:up
 
 ### Demo falha com "CommitmentMismatch"
 
-A rede Besu tem state persistente. Se você re-roda o demo após mudanças, faça:
+A demo de sucesso (`make demo`) usa partes efêmeras a cada execução, então é re-executável sem reset. Esse erro só ocorre se o `Verifier.sol` foi regenerado (nova CRS via `make zkp:setup`) sem um novo deploy. Nesse caso, refaça o deploy:
 
 ```bash
 make besu:reset
