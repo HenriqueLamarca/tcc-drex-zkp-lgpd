@@ -353,7 +353,7 @@ async function main(): Promise<void> {
 main()
   .then(() => {
     // Sinaliza sucesso por arquivo-sentinela antes do exit (ver scripts/04_deploy.ts).
-    try { fs.writeFileSync(".make_step.ok", "benchmark"); } catch {}
+    try { fs.writeFileSync(".make_step.ok", "benchmark"); } catch { /* sentinela e best-effort */ }
     process.exit(0);
   })
   .catch((error: unknown) => {

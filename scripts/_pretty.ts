@@ -136,7 +136,7 @@ export function receipt(data: ReceiptData): void {
   const sep  = "─".repeat(INNER);
   const blank = " ".repeat(INNER);
 
-  const draw = (content: string) => {
+  const draw = (content: string): void => {
     // Usa cor magenta nas bordas; pad respeitando ANSI dentro de content.
     console.log(`${C.magenta}║${C.reset}${pad(content, INNER)}${C.magenta}║${C.reset}`);
   };

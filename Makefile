@@ -1,4 +1,4 @@
-.PHONY: all besu\:up besu\:down besu\:reset zkp\:setup compile deploy demo test benchmark lint help
+.PHONY: all besu\:up besu\:down besu\:reset zkp\:setup compile deploy demo demo\:fail demo\:both viz viz\:up test benchmark lint help
 
 ZOKRATES_IMAGE := zokrates/zokrates:0.8.8
 BESU_COMPOSE  := besu-network/docker-compose.yml
@@ -21,8 +21,8 @@ endif
 # reais. Documentadas em besu-network/README.md.
 export BESU_PRIVATE_KEYS := 0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63,0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3,0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f,0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97
 
-# Executa o pipeline completo: rede → zkp → deploy → demo → benchmark
-all: besu\:up zkp\:setup deploy demo benchmark
+# Executa o pipeline completo: rede → zkp → deploy → demo → demo:fail → benchmark
+all: besu\:up zkp\:setup deploy demo demo\:fail benchmark
 
 # ─── Rede Besu ────────────────────────────────────────────────────────────────
 
@@ -89,6 +89,31 @@ demo\:local:
 	@echo "[demo] Executando cenário DvP na Hardhat Network..."
 	npm run dvp:demo:local
 
+demo\:fail:
+	@echo "[demo] Executando cenário de REJEIÇÃO (liquidação inválida) na Besu..."
+	@$(BASH) scripts/run_step.sh "npm run dvp:demo:fail"
+
+# Roda os dois cenários (sucesso + rejeição) em sequência. Útil para reapresentar
+# à banca sem precisar refazer rede/deploy (assume deploy já existente).
+demo\:both: demo demo\:fail
+	@echo "[demo] Cenários de sucesso e rejeição concluídos."
+
+# Painel visual: servidor local que roda os scripts reais e mostra a saída no navegador.
+viz:
+	@echo "[viz] Iniciando painel visual em http://localhost:4173 ..."
+	npm run viz
+
+# Comando único para a banca: sobe a rede Besu (o "banco"), prepara o circuito e
+# abre o painel HTML. Deploy, liquidações e benchmark são rodados pelos botões.
+viz\:up: besu\:up zkp\:setup
+	@echo "[viz] Rede Besu no ar e circuito preparado."
+	@echo "[viz] Abrindo o painel em http://localhost:4173 — use os botões para o resto."
+	npm run viz
+
+demo\:fail\:local:
+	@echo "[demo] Executando cenário de REJEIÇÃO (liquidação inválida) na Hardhat Network..."
+	@$(BASH) scripts/run_step.sh "npm run dvp:demo:fail:local"
+
 # ─── Testes ───────────────────────────────────────────────────────────────────
 
 test:
@@ -126,7 +151,7 @@ typecheck:
 help:
 	@echo ""
 	@echo "Targets disponíveis:"
-	@echo "  make all            Pipeline completo (rede → zkp → deploy → demo → benchmark)"
+	@echo "  make all            Pipeline completo (rede → zkp → deploy → demo → demo:fail → benchmark)"
 	@echo "  make besu:up        Sobe rede Besu QBFT 4 nós"
 	@echo "  make besu:down      Derruba rede Besu"
 	@echo "  make besu:reset     Reseta rede e volumes"
@@ -139,6 +164,10 @@ help:
 	@echo "  make deploy:local   Deploya contratos na Hardhat Network"
 	@echo "  make demo           Executa cenário DvP ponta-a-ponta (Besu)"
 	@echo "  make demo:local     Executa cenário DvP na Hardhat Network"
+	@echo "  make demo:fail      Executa cenário de REJEIÇÃO de liquidação inválida (Besu)"
+	@echo "  make demo:both      Executa os dois cenários: sucesso + rejeição (Besu)"
+	@echo "  make viz:up         COMANDO ÚNICO: sobe a rede Besu + circuito + abre o painel"
+	@echo "  make viz            Só abre o painel (rede já no ar)"
 	@echo "  make test           Executa todos os testes"
 	@echo "  make coverage       Gera relatório de cobertura"
 	@echo "  make benchmark      Executa benchmark e gera CSV"

@@ -204,7 +204,7 @@ main()
     // ("!(handle->flags & UV_HANDLE_CLOSING)") que sobrescreve o codigo de
     // saida. O Makefile confere este sentinela em vez do exit code, tornando
     // a deteccao de sucesso deterministica e independente do crash de teardown.
-    try { fs.writeFileSync(".make_step.ok", "deploy"); } catch {}
+    try { fs.writeFileSync(".make_step.ok", "deploy"); } catch { /* sentinela e best-effort */ }
     process.exit(0);
   })
   .catch((error: unknown) => {
