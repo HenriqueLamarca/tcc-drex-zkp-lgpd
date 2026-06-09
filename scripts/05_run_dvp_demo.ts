@@ -80,7 +80,15 @@ async function main(): Promise<void> {
   ) as Deployment;
 
   const signers = await ethers.getSigners();
-  const [admin, regulator, alice, bob] = signers;
+  const [admin, regulator] = signers;
+
+  // Partes efemeras: novas a cada execucao, garantindo que a demo seja sempre
+  // re-executavel (o estado de uma execucao anterior nunca colide). Sao apenas
+  // labels no mapeamento de commitments; quem paga o gas e' o admin. O
+  // commitment Poseidon (hash do saldo) e' o mesmo independentemente do
+  // endereco que o detem, entao a prova de referencia permanece valida.
+  const alice = ethers.Wallet.createRandom();
+  const bob = ethers.Wallet.createRandom();
 
   pretty.header(
     `Demo DvP — PoC DREX-ZKP-LGPD   (rede: ${network.name})`,
@@ -165,7 +173,7 @@ async function main(): Promise<void> {
   // ─── Executa DvP ───────────────────────────────────────────────────────────
   log({ event: "dvp_submitting" });
   const tx = await dvp
-    .connect(alice)
+    .connect(admin)
     .executeDvP(
       alice.address,
       bob.address,
@@ -327,7 +335,7 @@ async function main(): Promise<void> {
 main()
   .then(() => {
     // Sinaliza sucesso por arquivo-sentinela antes do exit (ver 04_deploy.ts).
-    try { fs.writeFileSync(".make_step.ok", "demo"); } catch {}
+    try { fs.writeFileSync(".make_step.ok", "demo"); } catch { /* sentinela e best-effort */ }
     process.exit(0);
   })
   .catch((error: unknown) => {
