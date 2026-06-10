@@ -44,6 +44,14 @@ function short(addr: string): string {
   return addr.slice(0, 6) + "…" + addr.slice(-4);
 }
 
+function shHash(h: string): string {
+  return h.slice(0, 12) + "…" + h.slice(-6);
+}
+
+// Rotulos das partes (mesmos nomes da demo de sucesso, para consistencia).
+const FROM_LABEL = "Henrique Lamarca";
+const TO_LABEL = "Tassio Ferenzini";
+
 // Enderecos de teste dedicados a esta demo (chaves de teste; nunca assinam,
 // servem so como labels no mapeamento de commitments).
 const PARTY_FROM = new ethers.Wallet(
@@ -73,7 +81,7 @@ async function main(): Promise<void> {
 
   pretty.header(
     `Demo de REJEICAO — PoC DREX-ZKP-LGPD   (rede: ${network.name})`,
-    `Tentativa de liquidacao invalida (sem prova de solvencia valida)`
+    `Tentativa: ${FROM_LABEL} -> ${TO_LABEL} (prova de solvencia invalida)`
   );
   log({ event: "demo_fail_start", network: network.name });
 
@@ -89,9 +97,11 @@ async function main(): Promise<void> {
   const fixture = loadValidFixture();
   const commitAOld = uintToBytes32(fixture.inputs.commitAOld);
   const commitBOld = uintToBytes32(fixture.inputs.commitBOld);
+  const commitBNewExpected = uintToBytes32(fixture.inputs.commitBNew);
 
   pretty.step(1, 4, "Carregando deployment + prova ZK de referencia");
-  pretty.note(`Pagador (teste): ${short(PARTY_FROM)}   Recebedor (teste): ${short(PARTY_TO)}`);
+  pretty.note(`Pagador:   ${FROM_LABEL} (${short(PARTY_FROM)})`);
+  pretty.note(`Recebedor: ${TO_LABEL} (${short(PARTY_TO)})`);
 
   // ─── Registra o estado inicial dos enderecos de teste (idempotente) ────────
   const ZERO = ethers.ZeroHash;
@@ -116,6 +126,7 @@ async function main(): Promise<void> {
     commitANew: fixture.inputs.commitANew,
     commitBNew: fixture.inputs.commitBNew + 1n, // <- adulterado
   };
+  const commitBNewDeclared = uintToBytes32(tamperedInputs.commitBNew);
   const ciphertext = encryptForRegulator({
     from: PARTY_FROM,
     to: PARTY_TO,
@@ -123,6 +134,13 @@ async function main(): Promise<void> {
     timestamp: new Date().toISOString(),
   });
   pretty.step(3, 4, "Submetendo liquidacao com prova que NAO confere com os dados");
+  pretty.info("Operacao tentada", `${FROM_LABEL} -> ${TO_LABEL}`);
+  pretty.info("Commit. antigos (conferem com a cadeia)", `${shHash(commitAOld)} / ${shHash(commitBOld)}`);
+  pretty.info("Commit. recebedor exigido pela prova", shHash(commitBNewExpected));
+  pretty.info("Commit. recebedor declarado (adulterado)", shHash(commitBNewDeclared));
+  pretty.note(
+    "O commitment final declarado nao corresponde a' prova: a verificacao on-chain (Verifier) falha e a liquidacao reverte."
+  );
   log({ event: "submitting_invalid_dvp", reason: "commitBNew adulterado" });
 
   // ─── Tenta executar — esperamos REVERT ─────────────────────────────────────
@@ -155,24 +173,45 @@ async function main(): Promise<void> {
   const fromAfter = await token.commitments(PARTY_FROM);
   const stateUnchanged = fromAfter === commitAOld;
 
-  pretty.section("Resultado: liquidacao corretamente REJEITADA");
-  pretty.success(
-    `A rede reverteu a transacao (${reason}) — a prova de solvencia nao confere com os dados.`
-  );
-  pretty.success(
-    `Estado inalterado: o commitment do pagador permanece o original (${stateUnchanged ? "confirmado" : "ATENCAO"}).`
-  );
-  pretty.note(
-    "Em uma transferencia insolvente, o circuito sequer geraria a prova (ver make zkp:test)."
-  );
-
-  pretty.done("✓  Controle de seguranca validado — operacao invalida bloqueada", [
-    `Rede:            ${network.name}`,
-    `Motivo da rejeicao:  ${reason}`,
-    `Estado on-chain:     inalterado (rejeicao atomica)`,
-    ``,
-    `Conclusao: a rede so' liquida operacoes com prova de solvencia valida.`,
-  ]);
+  if (pretty.isCompact()) {
+    pretty.card(
+      "LIQUIDAÇÃO REJEITADA — a prova de solvência não confere",
+      [
+        `Operação tentada:  ${FROM_LABEL} → ${TO_LABEL}`,
+        "",
+        "Commitments antigos (conferem com a cadeia, passam na 1ª checagem):",
+        `  ${FROM_LABEL}:  ${shHash(commitAOld)}`,
+        `  ${TO_LABEL}:  ${shHash(commitBOld)}`,
+        "",
+        "Commitment final do recebedor — é onde a fraude aparece:",
+        `  exigido pela prova:      ${shHash(commitBNewExpected)}`,
+        `  declarado (adulterado):  ${shHash(commitBNewDeclared)}  ← não bate`,
+        "",
+        `Verifier rejeita (${reason}) — a liquidação reverte (atômica).`,
+        `Estado on-chain inalterado${stateUnchanged ? " (OK)" : " (ATENÇÃO)"}.`,
+        "A rede só liquida operações com prova de solvência válida.",
+      ],
+      "red"
+    );
+  } else {
+    pretty.section("Resultado: liquidacao corretamente REJEITADA");
+    pretty.success(
+      `A rede reverteu a transacao (${reason}) — a prova de solvencia nao confere com os dados.`
+    );
+    pretty.success(
+      `Estado inalterado: o commitment do pagador permanece o original (${stateUnchanged ? "confirmado" : "ATENCAO"}).`
+    );
+    pretty.note(
+      "Em uma transferencia insolvente, o circuito sequer geraria a prova (ver make zkp:test)."
+    );
+    pretty.done("✓  Controle de seguranca validado — operacao invalida bloqueada", [
+      `Rede:            ${network.name}`,
+      `Motivo da rejeicao:  ${reason}`,
+      `Estado on-chain:     inalterado (rejeicao atomica)`,
+      ``,
+      `Conclusao: a rede so' liquida operacoes com prova de solvencia valida.`,
+    ]);
+  }
   log({
     event: "demo_fail_complete",
     rejected: true,
