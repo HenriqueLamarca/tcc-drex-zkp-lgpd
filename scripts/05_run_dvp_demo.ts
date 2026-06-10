@@ -7,12 +7,12 @@
 //   3. Deploy: npx hardhat run scripts/04_deploy.ts --network <rede>
 //
 // Cenario (mesmo do smoke test T1 e da fixture):
-//   - Alice (S_A=100) transfere V=30 para Bob (S_B=50)
-//   - Saldos finais: Alice=70, Bob=80 (provados internamente, nao revelados)
+//   - Henrique Lamarca (S_A=100) transfere V=30 para Tassio Ferenzini (S_B=50)
+//   - Saldos finais: Henrique Lamarca=70, Tassio Ferenzini=80 (provados internamente, nao revelados)
 //
 // Fluxo:
 //   1. Carrega deployment JSON da rede atual
-//   2. Mint inicial dos commitments de Alice e Bob (idempotente)
+//   2. Mint inicial dos commitments de Henrique Lamarca e Tassio Ferenzini (idempotente)
 //   3. Cifra payload real para o regulador (ECIES secp256k1)
 //   4. Submete prova Groth16 + 4 inputs publicos ao DvPSettlement
 //   5. Verifica state changes: commitments updated, txCount++
@@ -57,10 +57,6 @@ function log(payload: Record<string, unknown>): void {
   pretty.json(payload);
 }
 
-function short(addr: string): string {
-  return addr.slice(0, 6) + "…" + addr.slice(-4);
-}
-
 async function main(): Promise<void> {
   const deploymentFile = path.join(
     __dirname,
@@ -92,7 +88,7 @@ async function main(): Promise<void> {
 
   pretty.header(
     `Demo DvP — PoC DREX-ZKP-LGPD   (rede: ${network.name})`,
-    `Pagador: ${short(alice.address)} (Alice)   →   Recebedor: ${short(bob.address)} (Bob)`
+    `Pagador: Henrique Lamarca   →   Recebedor: Tassio Ferenzini`
   );
   log({
     event: "demo_start",
@@ -130,26 +126,26 @@ async function main(): Promise<void> {
   if (aliceCurrent === ZERO) {
     log({ event: "minting", account: alice.address });
     await (await token.connect(admin).mint(alice.address, aliceCommitOld)).wait();
-    pretty.step(2, 6, "Registrando saldo inicial de Alice (commitment Poseidon)");
+    pretty.step(2, 6, "Registrando saldo inicial de Henrique Lamarca (commitment Poseidon)");
   } else if (aliceCurrent !== aliceCommitOld) {
     throw new Error(
-      `Alice tem commitment incompativel on-chain. Atual: ${aliceCurrent}, esperado: ${aliceCommitOld}. Resete a rede ou use outras contas.`
+      `Henrique Lamarca tem commitment incompativel on-chain. Atual: ${aliceCurrent}, esperado: ${aliceCommitOld}. Resete a rede ou use outras contas.`
     );
   } else {
-    pretty.step(2, 6, "Saldo de Alice ja registrado (idempotente)");
+    pretty.step(2, 6, "Saldo de Henrique Lamarca ja registrado (idempotente)");
   }
 
   const bobCurrent = await token.commitments(bob.address);
   if (bobCurrent === ZERO) {
     log({ event: "minting", account: bob.address });
     await (await token.connect(admin).mint(bob.address, bobCommitOld)).wait();
-    pretty.step(3, 6, "Registrando saldo inicial de Bob (commitment Poseidon)");
+    pretty.step(3, 6, "Registrando saldo inicial de Tassio Ferenzini (commitment Poseidon)");
   } else if (bobCurrent !== bobCommitOld) {
     throw new Error(
-      `Bob tem commitment incompativel on-chain. Atual: ${bobCurrent}, esperado: ${bobCommitOld}.`
+      `Tassio Ferenzini tem commitment incompativel on-chain. Atual: ${bobCurrent}, esperado: ${bobCommitOld}.`
     );
   } else {
-    pretty.step(3, 6, "Saldo de Bob ja registrado (idempotente)");
+    pretty.step(3, 6, "Saldo de Tassio Ferenzini ja registrado (idempotente)");
   }
 
   // ─── Cifra payload real para o regulador (ECIES secp256k1) ─────────────────
@@ -204,12 +200,12 @@ async function main(): Promise<void> {
 
   if (aliceFinal !== aliceCommitNew) {
     throw new Error(
-      `Commit final de Alice incorreto. Esperado: ${aliceCommitNew}, atual: ${aliceFinal}`
+      `Commit final de Henrique Lamarca incorreto. Esperado: ${aliceCommitNew}, atual: ${aliceFinal}`
     );
   }
   if (bobFinal !== bobCommitNew) {
     throw new Error(
-      `Commit final de Bob incorreto. Esperado: ${bobCommitNew}, atual: ${bobFinal}`
+      `Commit final de Tassio Ferenzini incorreto. Esperado: ${bobCommitNew}, atual: ${bobFinal}`
     );
   }
 
@@ -254,7 +250,20 @@ async function main(): Promise<void> {
     decrypted.to === bob.address &&
     typeof decrypted.value === "string" &&
     decrypted.value.length > 0;
-  if (roundtripOk) {
+  if (pretty.isCompact()) {
+    pretty.card(
+      "TRILHA DE AUDITORIA DO REGULADOR (LC 105/2001)",
+      [
+        "Acesso via accessEncryptedTx → evento RegulatorAccessed on-chain",
+        `Bloco do acesso:  ${accessReceipt!.blockNumber}`,
+        `Tx do acesso:     ${accessTx.hash.slice(0, 10)}…${accessTx.hash.slice(-8)}`,
+        "",
+        `Decifração ECIES off-chain:  ${roundtripOk ? "roundtrip verificado OK" : "FALHOU"}`,
+        "Valor recuperado pelo regulador, NÃO impresso (RNF06).",
+      ],
+      roundtripOk ? "green" : "red"
+    );
+  } else if (roundtripOk) {
     pretty.success("Regulador decifra o blob ECIES off-chain — roundtrip verificado");
   } else {
     pretty.fail("Roundtrip ECIES falhou");
@@ -280,13 +289,13 @@ async function main(): Promise<void> {
       network: network.name,
       gasUsed: receipt.gasUsed.toString(),
       from: {
-        label: "Alice",
+        label: "Henrique Lamarca",
         address: alice.address,
         balanceBefore: witness.private_inputs.S_A,
         balanceAfter: witness.private_inputs.S_A_new,
       },
       to: {
-        label: "Bob",
+        label: "Tassio Ferenzini",
         address: bob.address,
         balanceBefore: witness.private_inputs.S_B,
         balanceAfter: witness.private_inputs.S_B_new,
