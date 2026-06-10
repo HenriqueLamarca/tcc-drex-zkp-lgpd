@@ -1,5 +1,5 @@
 # Benchmark da PoC DREX-ZKP-LGPD
-# Gerado: 2026-05-20T22:38:36.570Z
+# Gerado: 2026-06-10T01:19:21.733Z
 # Maquina: 12th Gen Intel(R) Core(TM) i5-12500H
 # RAM: 31.7 GB
 # OS: Windows_NT 10.0.26200
@@ -8,7 +8,7 @@
 # Iteracoes (mediana): 5
 # Esquema: Groth16 / BN128 / curva alt_bn128 com precompileds EVM
 operacao,tempo_ms,gas_consumido,tamanho_prova_bytes,n_constraints
-compute_witness_zokrates,1074,n/a,n/a,1728
-generate_proof_groth16,1282,n/a,256,1728
+compute_witness_zokrates,871,n/a,n/a,1728
+generate_proof_groth16,1083,n/a,256,1728
 verify_tx_on_chain,n/a,264032,256,1728
 execute_dvp_full_tx,n/a,503865,256,1728
