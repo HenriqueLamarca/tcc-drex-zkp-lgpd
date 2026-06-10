@@ -52,6 +52,7 @@ interface Deployment {
 }
 
 import * as pretty from "./_pretty";
+import { shutdown } from "./_shutdown";
 
 function log(payload: Record<string, unknown>): void {
   pretty.json(payload);
@@ -343,13 +344,13 @@ async function main(): Promise<void> {
 
 main()
   .then(() => {
-    // Sinaliza sucesso por arquivo-sentinela antes do exit (ver 04_deploy.ts).
+    // Sinaliza sucesso por arquivo-sentinela antes da saida (ver 04_deploy.ts).
     try { fs.writeFileSync(".make_step.ok", "demo"); } catch { /* sentinela e best-effort */ }
-    process.exit(0);
+    shutdown(0);
   })
   .catch((error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
     log({ event: "demo_failed", error: message });
     pretty.fail(`Demo falhou: ${message}`);
-    process.exit(1);
+    shutdown(1);
   });

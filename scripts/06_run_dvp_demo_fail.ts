@@ -24,6 +24,7 @@ import path from "path";
 import { PrivateToken, DvPSettlement } from "../typechain-types";
 import { loadValidFixture, uintToBytes32, encryptForRegulator } from "../test/fixtures/helpers";
 import * as pretty from "./_pretty";
+import { shutdown } from "./_shutdown";
 
 interface Deployment {
   contracts: {
@@ -223,13 +224,13 @@ async function main(): Promise<void> {
 main()
   .then(() => {
     // Sentinela: a demo "teve sucesso" quando a operacao invalida foi rejeitada
-    // como esperado. Tolera o crash de teardown do libuv no Windows.
+    // como esperado. Saida limpa para evitar o crash de teardown do libuv.
     try { fs.writeFileSync(".make_step.ok", "demo_fail"); } catch { /* sentinela e best-effort */ }
-    process.exit(0);
+    shutdown(0);
   })
   .catch((error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
     log({ event: "demo_fail_error", error: message });
     pretty.fail(`Demo de rejeicao falhou: ${message}`);
-    process.exit(1);
+    shutdown(1);
   });
