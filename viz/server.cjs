@@ -94,10 +94,18 @@ const server = http.createServer((req, res) => {
 
     send(null, { line: `$ npm run ${t.script}` });
 
+    // No painel, a liquidação e a rejeição rodam em modo compacto: cada
+    // resultado vira um quadro auto-contido (comprovante, trilha de auditoria,
+    // rejeição), ideal para uma única captura de tela (figuras do artigo).
+    const compact = target === "demo" || target === "demo-fail";
     const child = spawn(`npm run ${t.script}`, {
       cwd: ROOT,
       shell: true,
-      env: { ...process.env, BESU_PRIVATE_KEYS: BESU_KEYS },
+      env: {
+        ...process.env,
+        BESU_PRIVATE_KEYS: BESU_KEYS,
+        ...(compact ? { DEMO_COMPACT: "1" } : {}),
+      },
     });
 
     const onData = (buf) => {

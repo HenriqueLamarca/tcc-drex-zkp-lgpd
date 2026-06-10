@@ -156,6 +156,17 @@ inválida resulta em um badge vermelho de rejeição (comportamento esperado de 
 Se a rede já estiver no ar, `make viz` abre só o painel. Caso a porta 4173 esteja
 ocupada por um painel anterior, encerre-o (`Ctrl + C`) antes de abrir outro.
 
+> **Capturas para o artigo (modo compacto).** No painel, a *Liquidação válida* e a
+> *Liquidação inválida* já rodam em **modo compacto**: cada resultado sai como um
+> quadro auto-contido — **Comprovante de liquidação**, **Trilha de auditoria** e
+> **Rejeição** — que cabe em uma única captura de tela (ideal para as figuras).
+> Para obter os mesmos quadros no terminal, ative o modo antes de rodar a demo:
+> ```powershell
+> $env:DEMO_COMPACT="1"; make demo        # comprovante + trilha de auditoria
+> $env:DEMO_COMPACT="1"; make demo:fail   # rejeição
+> $env:DEMO_COMPACT=$null                  # volta ao modo detalhado
+> ```
+
 ---
 
 ## Tabela de cenários

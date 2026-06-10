@@ -9,6 +9,12 @@
 
 const PRETTY: boolean = process.env.LOG_FORMAT !== "json";
 const USE_COLOR: boolean = PRETTY && Boolean(process.stdout.isTTY);
+// Modo compacto de apresentação: imprime só os quadros essenciais
+// (comprovante, trilha de auditoria, conclusão), suprimindo passos/infos.
+// Cada quadro fica auto-contido e cabe em uma única captura de tela — ideal
+// para as figuras do artigo. Ative com:
+//   $env:DEMO_COMPACT="1"  (PowerShell)  ou  DEMO_COMPACT=1  (bash).
+const COMPACT: boolean = PRETTY && process.env.DEMO_COMPACT === "1";
 
 const C = {
   reset: USE_COLOR ? "\x1b[0m" : "",
@@ -32,7 +38,7 @@ function pad(s: string, w: number): string {
 }
 
 export function header(title: string, subtitle?: string): void {
-  if (!PRETTY) return;
+  if (!PRETTY || COMPACT) return;
   const line = "═".repeat(WIDTH - 2);
   console.log(`${C.cyan}╔${line}╗${C.reset}`);
   console.log(`${C.cyan}║${C.reset} ${C.bold}${pad(title, WIDTH - 3)}${C.reset}${C.cyan}║${C.reset}`);
@@ -43,7 +49,7 @@ export function header(title: string, subtitle?: string): void {
 }
 
 export function step(n: number, total: number, label: string, ok = true): void {
-  if (!PRETTY) return;
+  if (!PRETTY || COMPACT) return;
   const icon = ok ? `${C.green}✓${C.reset}` : `${C.red}✗${C.reset}`;
   const prefix = `${C.gray}[${n}/${total}]${C.reset}`;
   const visibleLen = label.length;
@@ -52,23 +58,23 @@ export function step(n: number, total: number, label: string, ok = true): void {
 }
 
 export function info(label: string, value: string | number | bigint): void {
-  if (!PRETTY) return;
+  if (!PRETTY || COMPACT) return;
   console.log(`        ${C.gray}${label}:${C.reset} ${C.bold}${String(value)}${C.reset}`);
 }
 
 export function section(title: string): void {
-  if (!PRETTY) return;
+  if (!PRETTY || COMPACT) return;
   console.log("");
   console.log(`${C.magenta}──── ${C.bold}${title}${C.reset} ${C.magenta}${"─".repeat(Math.max(3, WIDTH - 7 - title.length))}${C.reset}`);
 }
 
 export function note(text: string): void {
-  if (!PRETTY) return;
+  if (!PRETTY || COMPACT) return;
   console.log(`        ${C.dim}${text}${C.reset}`);
 }
 
 export function success(text: string): void {
-  if (!PRETTY) return;
+  if (!PRETTY || COMPACT) return;
   console.log(`${C.green}✓${C.reset} ${text}`);
 }
 
@@ -95,6 +101,26 @@ export function done(title: string, lines: string[]): void {
     }
   }
   console.log(`${C.green}╚${line}╝${C.reset}`);
+}
+
+/**
+ * Quadro genérico auto-contido (título + linhas), pensado para virar UMA
+ * figura do artigo numa única captura. A cor da borda destaca o resultado
+ * (verde = ok, vermelho = falha, magenta = informativo).
+ */
+export function card(title: string, lines: string[], color: keyof typeof C = "magenta"): void {
+  if (!PRETTY) return;
+  const c = C[color] || C.magenta;
+  const border = "═".repeat(WIDTH - 2);
+  const sep = "─".repeat(WIDTH - 2);
+  console.log("");
+  console.log(`${c}╔${border}╗${C.reset}`);
+  console.log(`${c}║${C.reset} ${C.bold}${pad(title, WIDTH - 3)}${C.reset}${c}║${C.reset}`);
+  console.log(`${c}╠${sep}╣${C.reset}`);
+  for (const ln of lines) {
+    console.log(`${c}║${C.reset} ${pad(ln, WIDTH - 3)}${c}║${C.reset}`);
+  }
+  console.log(`${c}╚${border}╝${C.reset}`);
 }
 
 /**
@@ -129,8 +155,31 @@ function shortHash(h: string, head = 10, tail = 8): string {
   return `${h.slice(0, head)}…${h.slice(-tail)}`;
 }
 
+/** Versão enxuta do comprovante (modo compacto) — cabe em uma só captura. */
+function receiptCompact(data: ReceiptData): void {
+  const gas = String(data.gasUsed).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  card("COMPROVANTE DE LIQUIDAÇÃO — DvP DREX (visão do regulador)", [
+    `Rede: ${data.network}     Bloco: ${data.blockNumber}     Gas: ${gas}`,
+    `Tx:   ${shortHash(data.txHash, 14, 10)}`,
+    "",
+    "SALDOS — off-chain, só o regulador decifra (LC 105/2001):",
+    `  ${data.from.label}:  ${data.from.balanceBefore} → ${data.from.balanceAfter} DREX   (- ${data.value})`,
+    `  ${data.to.label}:  ${data.to.balanceBefore} → ${data.to.balanceAfter} DREX   (+ ${data.value})`,
+    "",
+    "COMMITMENTS Poseidon — o que de fato está on-chain:",
+    `  ${data.from.label}:  ${shortHash(data.commitmentsBefore.from, 12, 6)} → ${shortHash(data.commitmentsAfter.from, 12, 6)}`,
+    `  ${data.to.label}:  ${shortHash(data.commitmentsBefore.to, 12, 6)} → ${shortHash(data.commitmentsAfter.to, 12, 6)}`,
+    "",
+    "Hashes Poseidon: irreversíveis sem a randomness (LGPD art. 5º XI).",
+  ], "magenta");
+}
+
 export function receipt(data: ReceiptData): void {
   if (!PRETTY) return;
+  if (COMPACT) {
+    receiptCompact(data);
+    return;
+  }
   const INNER = WIDTH - 2;
   const line = "═".repeat(INNER);
   const sep  = "─".repeat(INNER);
@@ -204,4 +253,11 @@ export function json(payload: Record<string, unknown>): void {
  */
 export function isPretty(): boolean {
   return PRETTY;
+}
+
+/**
+ * Indica se o modo compacto de apresentação está ativo (DEMO_COMPACT=1).
+ */
+export function isCompact(): boolean {
+  return COMPACT;
 }
