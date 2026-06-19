@@ -11,7 +11,7 @@
 // =============================================================================
 
 const http = require("http");
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -154,6 +154,38 @@ server.on("error", (err) => {
   }
   throw err;
 });
+
+// Encerramento limpo (Ctrl+C). Quando o painel é aberto por `make viz:up`
+// (que sobe a rede), a variável VIZ_DOWN_ON_EXIT=1 faz com que o Ctrl+C
+// também derrube a rede Besu. Aberto por `make viz` (rede já no ar e gerida
+// à parte), apenas encerra o painel e deixa a rede de pé.
+let encerrando = false;
+function encerrar(sinal) {
+  if (encerrando) return;
+  encerrando = true;
+  if (process.env.VIZ_DOWN_ON_EXIT === "1") {
+    console.log(`\n  [viz] Encerrando (${sinal}) — derrubando a rede Besu...`);
+    try {
+      execSync(`docker compose -f ${path.join(ROOT, "besu-network", "docker-compose.yml")} down`, {
+        cwd: ROOT,
+        stdio: "inherit",
+      });
+      console.log("  [viz] Rede Besu encerrada.");
+    } catch (_e) {
+      console.error("  [viz] Falha ao derrubar a rede — rode 'make besu:down' manualmente.");
+    }
+  } else {
+    console.log(`\n  [viz] Painel encerrado (${sinal}). A rede Besu continua no ar (use 'make besu:down').`);
+  }
+  process.exit(0);
+}
+for (const sig of ["SIGINT", "SIGTERM", "SIGBREAK"]) {
+  try {
+    process.on(sig, () => encerrar(sig));
+  } catch (_e) {
+    /* sinal indisponível na plataforma — ignora */
+  }
+}
 
 server.listen(PORT, "127.0.0.1", () => {
   const urlStr = `http://localhost:${PORT}`;

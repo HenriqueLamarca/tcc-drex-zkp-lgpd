@@ -105,10 +105,12 @@ viz:
 
 # Comando único para a banca: sobe a rede Besu (o "banco"), prepara o circuito e
 # abre o painel HTML. Deploy, liquidações e benchmark são rodados pelos botões.
+viz\:up: export VIZ_DOWN_ON_EXIT := 1
 viz\:up: besu\:up zkp\:setup
 	@echo "[viz] Rede Besu no ar e circuito preparado."
 	@echo "[viz] Abrindo o painel em http://localhost:4173 — use os botões para o resto."
-	npm run viz
+	@echo "[viz] Ao encerrar com Ctrl+C, a rede Besu será derrubada automaticamente."
+	node viz/server.cjs
 
 demo\:fail\:local:
 	@echo "[demo] Executando cenário de REJEIÇÃO (liquidação inválida) na Hardhat Network..."
