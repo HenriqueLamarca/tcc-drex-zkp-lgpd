@@ -3,114 +3,169 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>PoC DREX-ZKP-LGPD — Painel de Demonstração</title>
+<title>PoC DREX-ZKP-LGPD — Painel</title>
 <style>
   :root {
-    --azul: #1f4e79;
-    --azul-claro: #2563eb;
-    --verde: #2e8b57;
-    --vermelho: #c0392b;
-    --ambar: #d97706;
-    --bg: #0f172a;
-    --card: #ffffff;
-    --texto: #1a1a1a;
+    --bg: #f4f6fb; --panel: #ffffff; --ink: #0f172a; --muted: #64748b;
+    --line: #e5e9f0; --line-soft: #eef1f6;
+    --accent: #1f4e79; --green: #0f9d58; --red: #d13438; --blue: #2563eb;
+    --amber: #c2780c; --slate: #475569;
+    --term-bg: #0d1117; --term-ink: #cdd6e3;
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0; font-family: "Segoe UI", Arial, sans-serif;
-    background: linear-gradient(160deg, #eef3fb 0%, #e2e8f0 100%);
-    color: var(--texto); min-height: 100vh;
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
-  header {
-    background: var(--azul); color: #fff; padding: 18px 28px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  header { background: var(--panel); border-bottom: 1px solid var(--line); padding: 16px 28px; }
+  .brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .brand h1 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -.01em; }
+  .brand .tag {
+    font: 600 10.5px/1 ui-monospace, SFMono-Regular, Consolas, monospace;
+    color: var(--accent); background: #eef3fb; border: 1px solid #dbe6f5;
+    padding: 4px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: .04em;
   }
-  header h1 { margin: 0; font-size: 20px; }
-  header p { margin: 4px 0 0; font-size: 13px; opacity: .85; }
-  .wrap { max-width: 1100px; margin: 22px auto; padding: 0 20px;
-          display: grid; grid-template-columns: 320px 1fr; gap: 20px; }
-  @media (max-width: 860px){ .wrap { grid-template-columns: 1fr; } }
-  .panel { background: var(--card); border-radius: 12px; padding: 18px;
-           box-shadow: 0 2px 10px rgba(0,0,0,.08); }
-  .panel h2 { margin: 0 0 12px; font-size: 15px; color: var(--azul); }
-  .nota { font-size: 12px; color: #555; background: #fff7ed; border: 1px solid #fed7aa;
-          border-radius: 8px; padding: 10px; margin-bottom: 14px; line-height: 1.4; }
-  button.run {
-    display: block; width: 100%; text-align: left; border: none; cursor: pointer;
-    padding: 13px 14px; margin-bottom: 10px; border-radius: 9px; color: #fff;
-    font-size: 14px; font-weight: 600; transition: transform .05s, filter .15s;
+  header p { margin: 6px 0 0; font-size: 12.5px; color: var(--muted); }
+
+  .wrap {
+    max-width: 1080px; margin: 22px auto; padding: 0 20px;
+    display: grid; grid-template-columns: 340px 1fr; gap: 18px; align-items: start;
   }
-  button.run small { display: block; font-weight: 400; font-size: 11.5px; opacity: .9; margin-top: 2px; }
-  button.run:hover:not(:disabled) { filter: brightness(1.08); }
-  button.run:active:not(:disabled) { transform: translateY(1px); }
-  button.run:disabled { opacity: .5; cursor: not-allowed; }
-  .b-deploy { background: #475569; }
-  .b-demo   { background: var(--verde); }
-  .b-fail   { background: var(--vermelho); }
-  .b-bench  { background: var(--azul-claro); }
-  .status { display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
-            font-size: 14px; font-weight: 600; min-height: 26px; }
-  .dot { width: 12px; height: 12px; border-radius: 50%; background: #cbd5e1; }
-  .dot.run { background: var(--ambar); animation: pulse 1s infinite; }
-  .dot.ok  { background: var(--verde); }
-  .dot.err { background: var(--vermelho); }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-  .badge { display: none; padding: 10px 14px; border-radius: 9px; font-weight: 700;
-           font-size: 15px; margin-bottom: 12px; }
-  .badge.ok  { display:block; background:#e7f6ec; color:var(--verde); border:1px solid #a7e3bd; }
-  .badge.err { display:block; background:#fdeaea; color:var(--vermelho); border:1px solid #f3b4b4; }
-  .term { background: #0b1020; color: #d6e2f0; border-radius: 10px; padding: 14px;
-          font-family: "Cascadia Code", Consolas, "Courier New", monospace;
-          font-size: 12.5px; line-height: 1.45; height: 540px; overflow-y: auto;
-          white-space: pre-wrap; word-break: break-word; }
-  .term .cmd { color: #7dd3fc; font-weight: 600; }
-  .term:empty::before { content: "A saída da execução aparecerá aqui…"; color:#64748b; }
-  .legenda { font-size: 12px; color:#475569; line-height:1.5; margin-top: 6px; }
-  .legenda b { color: var(--texto); }
+  @media (max-width: 880px) { .wrap { grid-template-columns: 1fr; } }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; }
+  .card > h2 {
+    margin: 0 0 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--muted);
+  }
+  .hint { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 0 0 14px; }
+  .hint code { background: var(--line-soft); padding: 1px 5px; border-radius: 5px; font-size: 11.5px; }
+
+  .actions { display: flex; flex-direction: column; gap: 8px; }
+  .action {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer;
+    background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--slate);
+    border-radius: 10px; padding: 11px 12px; color: var(--ink);
+    transition: background .12s, border-color .12s, transform .04s;
+  }
+  .action:hover:not(:disabled) { background: #f8fafc; }
+  .action:active:not(:disabled) { transform: translateY(1px); }
+  .action:disabled { opacity: .45; cursor: not-allowed; }
+  .action .num {
+    flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--line-soft);
+    color: var(--slate); font: 600 12px/24px ui-monospace, Consolas, monospace; text-align: center;
+  }
+  .action .meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .action .title { font-size: 13.5px; font-weight: 600; }
+  .action .desc { font-size: 11.5px; color: var(--muted); }
+  .action.demo { border-left-color: var(--green); }
+  .action.demo .num { color: var(--green); background: #e8f5ee; }
+  .action.fail { border-left-color: var(--red); }
+  .action.fail .num { color: var(--red); background: #fdeaea; }
+  .action.bench { border-left-color: var(--blue); }
+  .action.bench .num { color: var(--blue); background: #e9effd; }
+
+  .interactive { margin-top: 14px; border: 1px solid var(--line); border-radius: 12px; padding: 13px; background: #fbfcfe; }
+  .interactive .h { font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .interactive .h .star { color: var(--amber); }
+  .interactive .sub { font-size: 11.5px; color: var(--muted); line-height: 1.45; margin: 6px 0 10px; }
+  .interactive .sub b { color: var(--ink); font-weight: 600; }
+  .field { display: flex; gap: 8px; }
+  .field input {
+    flex: 0 0 92px; padding: 9px 10px; border: 1px solid #cdd5e1; border-radius: 8px;
+    font-size: 14px; font-variant-numeric: tabular-nums; color: var(--ink);
+  }
+  .field input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31,78,121,.12); }
+  .field button {
+    flex: 1; border: none; cursor: pointer; border-radius: 8px; background: var(--accent);
+    color: #fff; font-size: 13px; font-weight: 600; transition: filter .12s, transform .04s;
+  }
+  .field button:hover:not(:disabled) { filter: brightness(1.08); }
+  .field button:active:not(:disabled) { transform: translateY(1px); }
+  .field button:disabled { opacity: .5; cursor: not-allowed; }
+
+  .legend { font-size: 11.5px; color: var(--muted); line-height: 1.6; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); }
+  .legend .sw { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .legend .g { background: var(--green); } .legend .r { background: var(--red); }
+
+  .outhead { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .outhead .t { font-size: 13px; font-weight: 600; }
+  .status { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #cbd5e1; flex: 0 0 auto; }
+  .dot.run { background: var(--amber); animation: pulse 1s infinite; }
+  .dot.ok { background: var(--green); }
+  .dot.err { background: var(--red); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  .badge { display: none; font-size: 13px; font-weight: 600; padding: 9px 12px; border-radius: 9px; margin-bottom: 12px; }
+  .badge.ok { display: block; background: #e8f5ee; color: #0b7a43; border: 1px solid #b7e3c9; }
+  .badge.err { display: block; background: #fdeaea; color: #b3261e; border: 1px solid #f3b9b6; }
+  .term {
+    background: var(--term-bg); color: var(--term-ink); border-radius: 10px; padding: 14px 15px;
+    font: 12.5px/1.5 ui-monospace, "Cascadia Code", SFMono-Regular, Consolas, "Courier New", monospace;
+    height: 560px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .term .cmd { color: #79c0ff; font-weight: 600; }
+  .term:empty::before { content: "A saída da execução aparece aqui."; color: #5b6675; }
 </style>
 </head>
 <body>
 <header>
-  <h1>PoC DREX-ZKP-LGPD — Painel de Demonstração</h1>
-  <p>Privacidade no Drex com Provas de Conhecimento Zero · execução real dos scripts do projeto</p>
+  <div class="brand">
+    <h1>Painel de Demonstração</h1>
+    <span class="tag">PoC · DREX-ZKP-LGPD</span>
+  </div>
+  <p>Privacidade no Drex com Provas de Conhecimento Zero — execução real dos scripts do projeto.</p>
 </header>
 
 <div class="wrap">
-  <div class="panel">
+  <div class="card">
     <h2>Cenários</h2>
-    <div class="nota">
-      A rede Besu já está no ar e o circuito preparado (via <code>make viz:up</code>).
-      Clique em <b>Deploy</b> uma vez para implantar os contratos e, em seguida, rode
-      os cenários nos botões abaixo.
+    <p class="hint">
+      Rede Besu no ar e circuito preparado (<code>make viz:up</code>). Faça o
+      <b>Deploy</b> uma vez e então rode os cenários.
+    </p>
+
+    <div class="actions">
+      <button class="action run" data-target="deploy" data-label="Deploy dos contratos">
+        <span class="num">1</span>
+        <span class="meta"><span class="title">Deploy dos contratos</span><span class="desc">Implanta os 4 contratos na rede Besu</span></span>
+      </button>
+      <button class="action run demo" data-target="demo" data-label="Liquidação válida">
+        <span class="num">2</span>
+        <span class="meta"><span class="title">Liquidação válida</span><span class="desc">DvP com prova de solvência correta → aceita</span></span>
+      </button>
+      <button class="action run fail" data-target="demo-fail" data-label="Liquidação inválida">
+        <span class="num">3</span>
+        <span class="meta"><span class="title">Liquidação inválida</span><span class="desc">Sem prova de solvência válida → revertida</span></span>
+      </button>
+      <button class="action run bench" data-target="benchmark" data-label="Benchmark">
+        <span class="num">4</span>
+        <span class="meta"><span class="title">Benchmark</span><span class="desc">Constraints, tempo de prova e gas</span></span>
+      </button>
     </div>
 
-    <button class="run b-deploy" data-target="deploy">
-      1 · Deploy dos contratos
-      <small>Implanta os 4 contratos na rede Besu</small>
-    </button>
-    <button class="run b-demo" data-target="demo">
-      2 · Liquidação VÁLIDA (sucesso)
-      <small>DvP com prova de solvência correta → aceita</small>
-    </button>
-    <button class="run b-fail" data-target="demo-fail">
-      3 · Liquidação INVÁLIDA (rejeição)
-      <small>Sem prova de solvência válida → revertida</small>
-    </button>
-    <button class="run b-bench" data-target="benchmark">
-      4 · Benchmark
-      <small>Mede constraints, tempo de prova e gas</small>
-    </button>
+    <div class="interactive">
+      <div class="h"><span class="star">★</span> Liquidação interativa</div>
+      <p class="sub">Saldos fixos (Henrique <b>100</b> → Tassio <b>50</b>); você escolhe o valor. Faça o <b>Deploy</b> antes.</p>
+      <div class="field">
+        <input type="number" id="valorTx" min="1" value="40" aria-label="Valor da transação" />
+        <button class="run" data-target="demo-value" data-label="Liquidação interativa">Liquidar valor</button>
+      </div>
+      <p class="sub">Valor ≤ 100 → a prova é gerada e a liquidação <b>efetiva</b>. Acima de 100 → <b>recusada</b> pela regra de solvência.</p>
+    </div>
 
-    <p class="legenda">
-      <b>Verde</b> = a rede aceitou a operação válida.<br>
-      <b>Vermelho</b> = a rede rejeitou a operação inválida (comportamento esperado).<br>
-      A demonstração de rejeição é um <b>sucesso de segurança</b>: a rede recusou o que não tinha prova.
+    <p class="legend">
+      <span class="sw g"></span><b>Verde</b>: operação válida aceita.<br>
+      <span class="sw r"></span><b>Vermelho</b>: operação inválida recusada — um <b>sucesso de segurança</b>, pois a rede negou o que não tinha prova.
     </p>
   </div>
 
-  <div class="panel">
-    <h2 id="titulo">Saída da execução</h2>
-    <div class="status"><span class="dot" id="dot"></span><span id="statusTxt">Pronto.</span></div>
+  <div class="card">
+    <div class="outhead">
+      <span class="t" id="titulo">Saída da execução</span>
+      <span class="status"><span class="dot" id="dot"></span><span id="statusTxt">Pronto</span></span>
+    </div>
     <div class="badge" id="badge"></div>
     <div class="term" id="term"></div>
   </div>
@@ -132,7 +187,7 @@
   function appendLine(line) {
     const div = document.createElement("div");
     if (line.startsWith("$ ")) div.className = "cmd";
-    div.textContent = line || " ";
+    div.textContent = line || " ";
     term.appendChild(div);
     term.scrollTop = term.scrollHeight;
   }
@@ -140,7 +195,16 @@
   buttons.forEach(btn => {
     btn.addEventListener("click", () => {
       const target = btn.dataset.target;
-      const label = btn.textContent.trim().split("\n")[0];
+      let extra = "";
+      if (target === "demo-value") {
+        const v = (document.getElementById("valorTx").value || "").trim();
+        if (!/^\d+$/.test(v) || Number(v) <= 0) {
+          alert("Informe um valor inteiro positivo.");
+          return;
+        }
+        extra = "&value=" + encodeURIComponent(v);
+      }
+      const label = btn.dataset.label || btn.textContent.trim().split("\n")[0];
       term.innerHTML = "";
       badge.className = "badge";
       badge.textContent = "";
@@ -149,7 +213,7 @@
       statusTxt.textContent = "Executando…";
       setRunning(true);
 
-      es = new EventSource("/run?target=" + encodeURIComponent(target));
+      es = new EventSource("/run?target=" + encodeURIComponent(target) + extra);
       es.onmessage = (ev) => {
         try { appendLine(JSON.parse(ev.data).line); } catch (_e) {}
       };
@@ -157,24 +221,29 @@
         const d = JSON.parse(ev.data);
         es.close(); setRunning(false);
         if (d.success) {
-          const rejeicao = target === "demo-fail";
           dot.className = "dot ok";
-          statusTxt.textContent = "Concluído.";
+          statusTxt.textContent = "Concluído";
           badge.className = "badge ok";
-          badge.textContent = rejeicao
-            ? "✓ Operação inválida REJEITADA pela rede (segurança validada)"
-            : "✓ Concluído com sucesso";
+          if (target === "demo-fail") {
+            badge.textContent = "✓ Operação inválida REJEITADA pela rede (segurança validada)";
+          } else if (target === "demo-value") {
+            badge.textContent = "✓ Liquidação efetivada com o valor escolhido";
+          } else {
+            badge.textContent = "✓ Concluído com sucesso";
+          }
         } else {
           dot.className = "dot err";
-          statusTxt.textContent = "Falhou.";
+          statusTxt.textContent = "Falhou";
           badge.className = "badge err";
-          badge.textContent = "✗ A etapa falhou — verifique a rede Besu e o deploy";
+          badge.textContent = target === "demo-value"
+            ? "✗ Liquidação NÃO efetivada — valor recusado pela regra de solvência (veja o motivo no log)"
+            : "✗ A etapa falhou — verifique a rede Besu e o deploy";
         }
       });
       es.onerror = () => {
         es.close(); setRunning(false);
         dot.className = "dot err";
-        statusTxt.textContent = "Conexão interrompida.";
+        statusTxt.textContent = "Conexão interrompida";
       };
     });
   });
