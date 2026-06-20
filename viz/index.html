@@ -102,11 +102,14 @@
   .badge.err { display: block; background: #fdeaea; color: #b3261e; border: 1px solid #f3b9b6; }
   .term {
     background: var(--term-bg); color: var(--term-ink); border-radius: 10px; padding: 14px 15px;
-    font: 12.5px/1.5 ui-monospace, "Cascadia Code", SFMono-Regular, Consolas, "Courier New", monospace;
-    height: 560px; overflow: auto; white-space: pre-wrap; word-break: break-word;
+    font: 12.5px/1.5 Consolas, "Cascadia Mono", "Cascadia Code", "Courier New", monospace;
+    height: 470px; overflow: auto; white-space: pre; tab-size: 2;
   }
+  .term div { min-height: 1em; }
   .term .cmd { color: #79c0ff; font-weight: 600; }
-  .term:empty::before { content: "A saída da execução aparece aqui."; color: #5b6675; }
+  .term .idle { white-space: normal; color: #8a93a3; line-height: 1.65; }
+  .term .idle code { color: #79c0ff; background: rgba(121,192,255,.1); padding: 1px 5px; border-radius: 5px; }
+  .term:empty::before { content: "A saída aparece aqui."; color: #5b6675; }
 </style>
 </head>
 <body>
@@ -122,8 +125,8 @@
   <div class="card">
     <h2>Cenários</h2>
     <p class="hint">
-      Rede Besu no ar e circuito preparado (<code>make viz:up</code>). Faça o
-      <b>Deploy</b> uma vez e então rode os cenários.
+      Rede, circuito e contratos já prontos via <code>make viz:up</code>. Rode os
+      cenários abaixo ou a liquidação interativa.
     </p>
 
     <div class="actions">
@@ -147,9 +150,9 @@
 
     <div class="interactive">
       <div class="h"><span class="star">★</span> Liquidação interativa</div>
-      <p class="sub">Saldos fixos (Henrique <b>100</b> → Tassio <b>50</b>); você escolhe o valor. Faça o <b>Deploy</b> antes.</p>
+      <p class="sub">Saldos fixos (Henrique <b>100</b> → Tassio <b>50</b>); você escolhe o valor da transação — aceita centavos (ex.: <b>30.50</b>).</p>
       <div class="field">
-        <input type="number" id="valorTx" min="1" value="40" aria-label="Valor da transação" />
+        <input type="number" id="valorTx" min="0.01" step="0.01" value="40" aria-label="Valor da transação" />
         <button class="run" data-target="demo-value" data-label="Liquidação interativa">Liquidar valor</button>
       </div>
       <p class="sub">Valor ≤ 100 → a prova é gerada e a liquidação <b>efetiva</b>. Acima de 100 → <b>recusada</b> pela regra de solvência.</p>
@@ -167,7 +170,7 @@
       <span class="status"><span class="dot" id="dot"></span><span id="statusTxt">Pronto</span></span>
     </div>
     <div class="badge" id="badge"></div>
-    <div class="term" id="term"></div>
+    <div class="term" id="term"><div class="idle">Pronto. Os contratos já foram implantados pelo <code>make viz:up</code>. Use os cenários ao lado — ou a Liquidação interativa — e a saída em tempo real (comprovante de liquidação, trilha de auditoria e comprovante de recusa) aparece aqui.</div></div>
   </div>
 </div>
 
@@ -198,8 +201,8 @@
       let extra = "";
       if (target === "demo-value") {
         const v = (document.getElementById("valorTx").value || "").trim();
-        if (!/^\d+$/.test(v) || Number(v) <= 0) {
-          alert("Informe um valor inteiro positivo.");
+        if (!/^\d+(\.\d{1,2})?$/.test(v) || Number(v) <= 0) {
+          alert("Informe um valor positivo, com até 2 casas decimais (ex.: 30.50).");
           return;
         }
         extra = "&value=" + encodeURIComponent(v);
