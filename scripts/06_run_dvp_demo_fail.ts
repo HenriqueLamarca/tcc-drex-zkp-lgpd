@@ -176,7 +176,7 @@ async function main(): Promise<void> {
 
   if (pretty.isCompact()) {
     pretty.card(
-      "LIQUIDAÇÃO REJEITADA — a prova de solvência não confere",
+      "COMPROVANTE — LIQUIDAÇÃO REJEITADA (prova inválida)",
       [
         `Operação tentada:  ${FROM_LABEL} → ${TO_LABEL}`,
         "",

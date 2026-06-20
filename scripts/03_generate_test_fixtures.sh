@@ -22,9 +22,11 @@ export MSYS2_ARG_CONV_EXCL="*"
 mkdir -p "$FIXTURES_DIR"
 
 # ─── Cenario T1 (igual ao smoke test) ────────────────────────────────────────
-S_A=100
-S_B=50
-V=30
+# Saldos e valor podem ser sobrescritos por ambiente (usado pelo DvP interativo
+# do painel, scripts/run_dvp_value.sh). Sem sobrescrita, mantem o cenario T1.
+S_A=${S_A:-100}
+S_B=${S_B:-50}
+V=${V:-30}
 R_A_OLD=11111
 R_B_OLD=22222
 R_A_NEW=33333

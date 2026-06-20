@@ -93,6 +93,11 @@ demo\:fail:
 	@echo "[demo] Executando cenário de REJEIÇÃO (liquidação inválida) na Besu..."
 	@$(BASH) scripts/run_step.sh "npm run dvp:demo:fail"
 
+# DvP interativo: saldos/partes fixos, valor escolhido na hora. Ex.: make dvp:value V=120
+# (valor <= 100 efetiva; > 100 é rejeitado pela regra de solvência). Também disponível no painel.
+dvp\:value:
+	@$(BASH) scripts/run_dvp_value.sh $(V)
+
 # Roda os dois cenários (sucesso + rejeição) em sequência. Útil para reapresentar
 # à banca sem precisar refazer rede/deploy (assume deploy já existente).
 demo\:both: demo demo\:fail

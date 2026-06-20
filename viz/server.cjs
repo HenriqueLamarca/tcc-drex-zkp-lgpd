@@ -49,8 +49,12 @@ const TARGETS = {
   deploy: { script: "deploy", label: "Deploy dos contratos" },
   demo: { script: "dvp:demo", label: "Liquidacao valida (sucesso)" },
   "demo-fail": { script: "dvp:demo:fail", label: "Liquidacao invalida (rejeicao)" },
+  "demo-value": { interactive: true, label: "Liquidacao com valor escolhido" },
   benchmark: { script: "benchmark", label: "Benchmark" },
 };
+
+// Caminho do Git Bash no Windows (mesmo do Makefile); fora dele, usa 'bash'.
+const BASH_BIN = process.platform === "win32" ? "C:/PROGRA~1/Git/bin/bash.exe" : "bash";
 
 function stripAnsi(s) {
   // eslint-disable-next-line no-control-regex
@@ -92,21 +96,33 @@ const server = http.createServer((req, res) => {
       /* sentinela pode nao existir — ok */
     }
 
-    send(null, { line: `$ npm run ${t.script}` });
+    // Monta o comando conforme o alvo. No painel, as liquidações rodam em modo
+    // compacto: cada resultado vira um quadro auto-contido (comprovante, trilha
+    // de auditoria, rejeição), ideal para uma única captura de tela.
+    const env = { ...process.env, BESU_PRIVATE_KEYS: BESU_KEYS };
+    let cmd;
+    if (target === "demo-value") {
+      // DvP interativo: o valor da transação vem do painel. Validação estrita
+      // (apenas dígitos) — o valor segue por variável de ambiente, nunca
+      // concatenado no comando, evitando injeção de shell.
+      const value = (url.searchParams.get("value") || "").trim();
+      if (!/^\d{1,9}$/.test(value)) {
+        send(null, { line: "[dvp] Valor invalido: informe um inteiro positivo." });
+        send("done", { success: false, target, label: t.label });
+        res.end();
+        return;
+      }
+      env.DVP_VALUE = value;
+      env.DEMO_COMPACT = "1";
+      cmd = `"${BASH_BIN}" scripts/run_dvp_value.sh`;
+      send(null, { line: `$ DVP_VALUE=${value} bash scripts/run_dvp_value.sh` });
+    } else {
+      if (target === "demo" || target === "demo-fail") env.DEMO_COMPACT = "1";
+      cmd = `npm run ${t.script}`;
+      send(null, { line: `$ npm run ${t.script}` });
+    }
 
-    // No painel, a liquidação e a rejeição rodam em modo compacto: cada
-    // resultado vira um quadro auto-contido (comprovante, trilha de auditoria,
-    // rejeição), ideal para uma única captura de tela (figuras do artigo).
-    const compact = target === "demo" || target === "demo-fail";
-    const child = spawn(`npm run ${t.script}`, {
-      cwd: ROOT,
-      shell: true,
-      env: {
-        ...process.env,
-        BESU_PRIVATE_KEYS: BESU_KEYS,
-        ...(compact ? { DEMO_COMPACT: "1" } : {}),
-      },
-    });
+    const child = spawn(cmd, { cwd: ROOT, shell: true, env });
 
     const onData = (buf) => {
       const text = stripAnsi(buf.toString("utf-8"));

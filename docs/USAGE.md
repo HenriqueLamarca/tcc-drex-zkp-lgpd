@@ -156,6 +156,16 @@ inválida resulta em um badge vermelho de rejeição (comportamento esperado de 
 Se a rede já estiver no ar, `make viz` abre só o painel. Caso a porta 4173 esteja
 ocupada por um painel anterior, encerre-o (`Ctrl + C`) antes de abrir outro.
 
+Ao encerrar o `make viz:up` com **`Ctrl + C`**, a rede Besu é **derrubada automaticamente**
+(o `make viz` avulso encerra só o painel e deixa a rede no ar).
+
+> **Liquidação interativa (você escolhe o valor).** No painel há o bloco *"★ Liquidação
+> interativa"*: saldos e partes são fixos (Henrique 100 → Tassio 50) e você digita o
+> **valor da transação**. Ao clicar em *Liquidar este valor*, a prova é **gerada na hora**
+> para aquele valor: se for válido (`0 < valor ≤ 100`) a liquidação **efetiva**; acima de
+> 100 (sem saldo) é **rejeitada** pela regra de solvência — sem nem gerar a prova.
+> No terminal: `make dvp:value V=120`.
+
 > **Capturas para o artigo (modo compacto).** No painel, a *Liquidação válida* e a
 > *Liquidação inválida* já rodam em **modo compacto**: cada resultado sai como um
 > quadro auto-contido — **Comprovante de liquidação**, **Trilha de auditoria** e
