@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 // =============================================================================
-// dvp_reject_card.cjs — Comprovante de uma operação NÃO efetivada (DvP interativo).
+// dvp_reject_card.cjs - Comprovante de uma operação NÃO efetivada (DvP interativo).
 //
 // Node puro (sem dependências), no MESMO estilo dos quadros de scripts/_pretty.ts
-// (WIDTH 72, bordas de caixa, cor desativada quando a saída não é TTY — como no
+// (WIDTH 72, bordas de caixa, cor desativada quando a saída não é TTY - como no
 // painel). Recebe os dados por variáveis de ambiente:
 //   DVP_FROM, DVP_TO, DVP_SA (saldo do pagador), DVP_VALUE (valor pedido),
 //   DVP_REASON ("insufficient" | "invalid").
@@ -43,20 +43,20 @@ const value = process.env.DVP_VALUE || "?";
 const reason = process.env.DVP_REASON || "insufficient";
 
 const lines = [
-  `Operação tentada:  ${from} → ${to}`,
+  `Operação tentada:  ${from} -> ${to}`,
   "",
   `Valor solicitado:  ${value} DREX`,
   `Saldo do pagador:  ${sA} DREX`,
   "",
 ];
 if (reason === "invalid") {
-  lines.push("Motivo da recusa:  valor inválido (deve ser um inteiro positivo).");
+  lines.push("Motivo da recusa:  valor inválido (use um número positivo, até 2 casas).");
 } else {
   lines.push("Motivo da recusa:  saldo insuficiente para o valor solicitado.");
   lines.push("A regra de solvência exige saldo maior ou igual ao valor;");
   lines.push("por isso o circuito sequer gerou a prova de conhecimento zero.");
 }
 lines.push("");
-lines.push("Resultado: nenhuma liquidação — estado on-chain inalterado.");
+lines.push("Resultado: nenhuma liquidação - estado on-chain inalterado.");
 
-card("COMPROVANTE — OPERAÇÃO NÃO EFETIVADA", lines);
+card("COMPROVANTE - OPERAÇÃO NÃO EFETIVADA", lines);

@@ -1,5 +1,5 @@
 // =============================================================================
-// _pretty.ts — Saída amigável para apresentação (com ANSI colors, caixas).
+// _pretty.ts - Saída amigável para apresentação (com ANSI colors, caixas).
 //
 // Default: modo "pretty" (cores, caixas, ícones, passos numerados).
 // Para o modo JSON estruturado (parseável por máquina / testes):
@@ -11,7 +11,7 @@ const PRETTY: boolean = process.env.LOG_FORMAT !== "json";
 const USE_COLOR: boolean = PRETTY && Boolean(process.stdout.isTTY);
 // Modo compacto de apresentação: imprime só os quadros essenciais
 // (comprovante, trilha de auditoria, conclusão), suprimindo passos/infos.
-// Cada quadro fica auto-contido e cabe em uma única captura de tela — ideal
+// Cada quadro fica auto-contido e cabe em uma única captura de tela - ideal
 // para as figuras do artigo. Ative com:
 //   $env:DEMO_COMPACT="1"  (PowerShell)  ou  DEMO_COMPACT=1  (bash).
 const COMPACT: boolean = PRETTY && process.env.DEMO_COMPACT === "1";
@@ -124,7 +124,7 @@ export function card(title: string, lines: string[], color: keyof typeof C = "ma
 }
 
 /**
- * Comprovante visual da transação — emulando o que o regulador veria
+ * Comprovante visual da transação - emulando o que o regulador veria
  * após decifrar o blob ECIES off-chain. Mostra valores em claro porque
  * representa a visão privilegiada do regulador (LC 105/2001), NÃO algo
  * que apareça on-chain. Preserva a tese: a chain só tem hashes; este
@@ -152,23 +152,23 @@ function rowKV(k: string, v: string, innerWidth: number): string {
 
 function shortHash(h: string, head = 10, tail = 8): string {
   if (h.length <= head + tail + 1) return h;
-  return `${h.slice(0, head)}…${h.slice(-tail)}`;
+  return `${h.slice(0, head)}...${h.slice(-tail)}`;
 }
 
-/** Versão enxuta do comprovante (modo compacto) — cabe em uma só captura. */
+/** Versão enxuta do comprovante (modo compacto) - cabe em uma só captura. */
 function receiptCompact(data: ReceiptData): void {
   const gas = String(data.gasUsed).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  card("COMPROVANTE DE LIQUIDAÇÃO — DvP DREX (visão do regulador)", [
+  card("COMPROVANTE DE LIQUIDAÇÃO - DvP DREX (visão do regulador)", [
     `Rede: ${data.network}     Bloco: ${data.blockNumber}     Gas: ${gas}`,
     `Tx:   ${shortHash(data.txHash, 14, 10)}`,
     "",
-    "SALDOS — off-chain, só o regulador decifra (LC 105/2001):",
-    `  ${data.from.label}:  ${data.from.balanceBefore} → ${data.from.balanceAfter} DREX   (- ${data.value})`,
-    `  ${data.to.label}:  ${data.to.balanceBefore} → ${data.to.balanceAfter} DREX   (+ ${data.value})`,
+    "SALDOS - off-chain, só o regulador decifra (LC 105/2001):",
+    `  ${data.from.label}:  ${data.from.balanceBefore} -> ${data.from.balanceAfter} DREX   (- ${data.value})`,
+    `  ${data.to.label}:  ${data.to.balanceBefore} -> ${data.to.balanceAfter} DREX   (+ ${data.value})`,
     "",
-    "COMMITMENTS Poseidon — o que de fato está on-chain:",
-    `  ${data.from.label}:  ${shortHash(data.commitmentsBefore.from, 12, 6)} → ${shortHash(data.commitmentsAfter.from, 12, 6)}`,
-    `  ${data.to.label}:  ${shortHash(data.commitmentsBefore.to, 12, 6)} → ${shortHash(data.commitmentsAfter.to, 12, 6)}`,
+    "COMMITMENTS Poseidon - o que de fato está on-chain:",
+    `  ${data.from.label}:  ${shortHash(data.commitmentsBefore.from, 12, 6)} -> ${shortHash(data.commitmentsAfter.from, 12, 6)}`,
+    `  ${data.to.label}:  ${shortHash(data.commitmentsBefore.to, 12, 6)} -> ${shortHash(data.commitmentsAfter.to, 12, 6)}`,
     "",
     "Hashes Poseidon: irreversíveis sem a randomness (LGPD art. 5º XI).",
   ], "magenta");
@@ -193,10 +193,10 @@ export function receipt(data: ReceiptData): void {
   console.log("");
   console.log(`${C.magenta}╔${line}╗${C.reset}`);
   // Cabeçalho
-  draw(pad(`  ${C.bold}COMPROVANTE DE LIQUIDAÇÃO — DvP DREX (visão do regulador)${C.reset}`, INNER));
+  draw(pad(`  ${C.bold}COMPROVANTE DE LIQUIDAÇÃO - DvP DREX (visão do regulador)${C.reset}`, INNER));
   draw(blank);
   draw(`  ${C.dim}Emitido após decifragem ECIES do blob de auditoria.${C.reset}`);
-  draw(`  ${C.dim}Os valores abaixo NÃO aparecem on-chain — só o regulador, com${C.reset}`);
+  draw(`  ${C.dim}Os valores abaixo NÃO aparecem on-chain - só o regulador, com${C.reset}`);
   draw(`  ${C.dim}sua chave privada, consegue produzir este comprovante.${C.reset}`);
   console.log(`${C.magenta}╠${sep}╣${C.reset}`);
 
@@ -226,7 +226,7 @@ export function receipt(data: ReceiptData): void {
   draw(blank);
 
   console.log(`${C.magenta}╠${sep}╣${C.reset}`);
-  // Commitments — o que a chain de fato armazena
+  // Commitments - o que a chain de fato armazena
   draw(`  ${C.bold}COMMITMENTS Poseidon (o que está on-chain)${C.reset}`);
   draw(rowKV("Pagador  antes",   shortHash(data.commitmentsBefore.from, 14, 8), INNER));
   draw(rowKV("Pagador  depois",  shortHash(data.commitmentsAfter.from,  14, 8), INNER));

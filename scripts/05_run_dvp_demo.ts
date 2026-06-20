@@ -1,5 +1,5 @@
 // =============================================================================
-// 05_run_dvp_demo.ts — Cenario ponta-a-ponta DvP no DREX-PoC.
+// 05_run_dvp_demo.ts - Cenario ponta-a-ponta DvP no DREX-PoC.
 //
 // Pre-requisitos:
 //   1. Setup ZoKrates: bash scripts/01_setup_zkp.sh
@@ -18,7 +18,7 @@
 //   5. Verifica state changes: commitments updated, txCount++
 //   6. Regulador acessa pela via auditavel (accessEncryptedTx) e decifra
 //      o blob off-chain (roundtrip ECIES verificado, sem vazar o valor)
-//   7. Imprime JSON estruturado — sem saldos/valores em plaintext (RNF06)
+//   7. Imprime JSON estruturado - sem saldos/valores em plaintext (RNF06)
 //
 // Uso:
 //   npx hardhat run scripts/05_run_dvp_demo.ts --network besu
@@ -88,8 +88,8 @@ async function main(): Promise<void> {
   const bob = ethers.Wallet.createRandom();
 
   pretty.header(
-    `Demo DvP — PoC DREX-ZKP-LGPD   (rede: ${network.name})`,
-    `Pagador: Henrique Lamarca   →   Recebedor: Tassio Ferenzini`
+    `Demo DvP - PoC DREX-ZKP-LGPD   (rede: ${network.name})`,
+    `Pagador: Henrique Lamarca   ->   Recebedor: Tassio Ferenzini`
   );
   log({
     event: "demo_start",
@@ -121,7 +121,7 @@ async function main(): Promise<void> {
   pretty.step(1, 6, "Carregando deployment + prova ZK (fixture)");
   log({ event: "fixture_loaded", scenario: "T1_valid" });
 
-  // ─── Mint inicial (idempotente — pula se ja' minted) ───────────────────────
+  // ─── Mint inicial (idempotente - pula se ja' minted) ───────────────────────
   const ZERO = ethers.ZeroHash;
   const aliceCurrent = await token.commitments(alice.address);
   if (aliceCurrent === ZERO) {
@@ -150,7 +150,7 @@ async function main(): Promise<void> {
   }
 
   // ─── Cifra payload real para o regulador (ECIES secp256k1) ─────────────────
-  // O payload contém o valor transferido (V=30) — NUNCA impresso no log
+  // O payload contém o valor transferido (V=30) - NUNCA impresso no log
   // (RNF06). Só o regulador, com a chave privada, decifra off-chain.
   const ciphertext = encryptForRegulator({
     from: alice.address,
@@ -183,7 +183,7 @@ async function main(): Promise<void> {
   if (!receipt) throw new Error("Transacao sem receipt");
 
   pretty.step(5, 6, "DvP submetido e minerado on-chain");
-  pretty.info("tx hash", tx.hash.slice(0, 10) + "…" + tx.hash.slice(-8));
+  pretty.info("tx hash", tx.hash.slice(0, 10) + "..." + tx.hash.slice(-8));
   pretty.info("bloco", receipt.blockNumber);
   pretty.info("gas consumido", receipt.gasUsed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
   log({
@@ -219,16 +219,16 @@ async function main(): Promise<void> {
 
   // ─── Regulador acessa audit trail pela via AUDITAVEL ───────────────────────
   // accessEncryptedTx emite RegulatorAccessed (trilha imutavel on-chain de
-  // quem acessou o que e quando) — fecha o vetor R2 do THREAT_MODEL.
+  // quem acessou o que e quando) - fecha o vetor R2 do THREAT_MODEL.
   pretty.section("Trilha de auditoria do regulador (LC 105/2001)");
   const auditRecord = await viewer
     .connect(regulator)
     .accessEncryptedTx.staticCall(lastTxId);
   const accessTx = await viewer.connect(regulator).accessEncryptedTx(lastTxId);
   const accessReceipt = await accessTx.wait();
-  pretty.success("Regulador acessa via accessEncryptedTx → emite RegulatorAccessed on-chain");
+  pretty.success("Regulador acessa via accessEncryptedTx -> emite RegulatorAccessed on-chain");
   pretty.info("acesso registrado no bloco", accessReceipt!.blockNumber);
-  pretty.info("tx do acesso", accessTx.hash.slice(0, 10) + "…" + accessTx.hash.slice(-8));
+  pretty.info("tx do acesso", accessTx.hash.slice(0, 10) + "..." + accessTx.hash.slice(-8));
   log({
     event: "regulator_accessed_audit",
     txId: lastTxId.toString(),
@@ -238,12 +238,12 @@ async function main(): Promise<void> {
     ciphertextBytes: (auditRecord.ciphertext.length - 2) / 2,
     accessAuditTxHash: accessTx.hash,
     accessAuditBlock: accessReceipt!.blockNumber,
-    note: "RegulatorAccessed emitido on-chain — acesso nao-repudiavel",
+    note: "RegulatorAccessed emitido on-chain - acesso nao-repudiavel",
   });
 
   // ─── Regulador decifra o blob ECIES off-chain (com a chave privada) ────────
   // Prova que o canal de auditoria funciona fim-a-fim. O valor decifrado
-  // (V) NÃO é impresso — RNF06: apenas confirmamos o roundtrip e que as
+  // (V) NÃO é impresso - RNF06: apenas confirmamos o roundtrip e que as
   // partes batem com o esperado, sem vazar o valor no log público.
   const decrypted = decryptAsRegulator(auditRecord.ciphertext);
   const roundtripOk =
@@ -255,9 +255,9 @@ async function main(): Promise<void> {
     pretty.card(
       "TRILHA DE AUDITORIA DO REGULADOR (LC 105/2001)",
       [
-        "Acesso via accessEncryptedTx → evento RegulatorAccessed on-chain",
+        "Acesso via accessEncryptedTx -> evento RegulatorAccessed on-chain",
         `Bloco do acesso:  ${accessReceipt!.blockNumber}`,
-        `Tx do acesso:     ${accessTx.hash.slice(0, 10)}…${accessTx.hash.slice(-8)}`,
+        `Tx do acesso:     ${accessTx.hash.slice(0, 10)}...${accessTx.hash.slice(-8)}`,
         "",
         `Decifração ECIES off-chain:  ${roundtripOk ? "roundtrip verificado OK" : "FALHOU"}`,
         "Valor recuperado pelo regulador, NÃO impresso (RNF06).",
@@ -265,7 +265,7 @@ async function main(): Promise<void> {
       roundtripOk ? "green" : "red"
     );
   } else if (roundtripOk) {
-    pretty.success("Regulador decifra o blob ECIES off-chain — roundtrip verificado");
+    pretty.success("Regulador decifra o blob ECIES off-chain - roundtrip verificado");
   } else {
     pretty.fail("Roundtrip ECIES falhou");
   }
@@ -274,13 +274,18 @@ async function main(): Promise<void> {
   // Os saldos antes/depois vêm do witness-data.json (visão privilegiada do
   // regulador, reconstruída off-chain a partir do blob ECIES + histórico).
   // ON-CHAIN só existem os 4 commitments Poseidon. RNF06 preservado: este
-  // comprovante NÃO é emitido por nenhum contrato — é produzido na máquina
+  // comprovante NÃO é emitido por nenhum contrato - é produzido na máquina
   // do regulador depois que ele aplicou sua chave privada.
   if (roundtripOk) {
     const witnessFile = path.join(__dirname, "..", "test", "fixtures", "witness-data.json");
     const witness = JSON.parse(fs.readFileSync(witnessFile, "utf-8")) as {
       private_inputs: { S_A: string; S_B: string; V: string; S_A_new: string; S_B_new: string };
     };
+    // Escala de exibicao: o circuito opera em unidades inteiras; quando os valores
+    // vem em centavos (liquidacao interativa fracionada, DVP_SCALE=100), exibimos
+    // em DREX com 2 casas. Sem DVP_SCALE, mostra o inteiro como esta (demo padrao).
+    const scale = Number(process.env.DVP_SCALE || "1");
+    const amt = (n: string): string => (scale > 1 ? (Number(n) / scale).toFixed(2) : String(n));
     const block = await ethers.provider.getBlock(receipt.blockNumber);
     const blockTs = block ? new Date(block.timestamp * 1000).toISOString() : new Date().toISOString();
     pretty.receipt({
@@ -292,16 +297,16 @@ async function main(): Promise<void> {
       from: {
         label: "Henrique Lamarca",
         address: alice.address,
-        balanceBefore: witness.private_inputs.S_A,
-        balanceAfter: witness.private_inputs.S_A_new,
+        balanceBefore: amt(witness.private_inputs.S_A),
+        balanceAfter: amt(witness.private_inputs.S_A_new),
       },
       to: {
         label: "Tassio Ferenzini",
         address: bob.address,
-        balanceBefore: witness.private_inputs.S_B,
-        balanceAfter: witness.private_inputs.S_B_new,
+        balanceBefore: amt(witness.private_inputs.S_B),
+        balanceAfter: amt(witness.private_inputs.S_B_new),
       },
-      value: witness.private_inputs.V,
+      value: amt(witness.private_inputs.V),
       commitmentsBefore: { from: aliceCommitOld, to: bobCommitOld },
       commitmentsAfter:  { from: aliceCommitNew, to: bobCommitNew },
     });
@@ -316,14 +321,14 @@ async function main(): Promise<void> {
 
   // ─── Resumo final ──────────────────────────────────────────────────────────
   const gasFmt = receipt.gasUsed.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  pretty.done("✓  Demo concluída — privacidade preservada", [
+  pretty.done("✓  Demo concluída - privacidade preservada", [
     `Rede:           ${network.name}`,
-    `Tx hash:        ${tx.hash.slice(0, 10)}…${tx.hash.slice(-8)}`,
+    `Tx hash:        ${tx.hash.slice(0, 10)}...${tx.hash.slice(-8)}`,
     `Bloco:          ${receipt.blockNumber}`,
     `Gas (executeDvP completo):  ${gasFmt}`,
     ``,
     `Privacidade:    on-chain só há hashes Poseidon (ver commitments acima).`,
-    `Auditoria:      regulador decifrou off-chain → comprovante acima.`,
+    `Auditoria:      regulador decifrou off-chain -> comprovante acima.`,
   ]);
   log({
     event: "demo_complete",

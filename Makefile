@@ -108,12 +108,13 @@ viz:
 	@echo "[viz] Iniciando painel visual em http://localhost:4173 ..."
 	npm run viz
 
-# Comando único para a banca: sobe a rede Besu (o "banco"), prepara o circuito e
-# abre o painel HTML. Deploy, liquidações e benchmark são rodados pelos botões.
+# Comando único para a banca: sobe a rede Besu (o "banco"), prepara o circuito,
+# IMPLANTA os contratos (Verifier casando com a CRS recém-gerada) e abre o painel.
+# O deploy aqui evita o erro de liquidação por Verifier defasado.
 viz\:up: export VIZ_DOWN_ON_EXIT := 1
-viz\:up: besu\:up zkp\:setup
-	@echo "[viz] Rede Besu no ar e circuito preparado."
-	@echo "[viz] Abrindo o painel em http://localhost:4173 — use os botões para o resto."
+viz\:up: besu\:up zkp\:setup deploy
+	@echo "[viz] Rede Besu no ar, circuito preparado e contratos implantados."
+	@echo "[viz] Abrindo o painel em http://localhost:4173 — as liquidações já funcionam."
 	@echo "[viz] Ao encerrar com Ctrl+C, a rede Besu será derrubada automaticamente."
 	node viz/server.cjs
 

@@ -106,8 +106,8 @@ const server = http.createServer((req, res) => {
       // (apenas dígitos) — o valor segue por variável de ambiente, nunca
       // concatenado no comando, evitando injeção de shell.
       const value = (url.searchParams.get("value") || "").trim();
-      if (!/^\d{1,9}$/.test(value)) {
-        send(null, { line: "[dvp] Valor invalido: informe um inteiro positivo." });
+      if (!/^\d{1,7}(\.\d{1,2})?$/.test(value)) {
+        send(null, { line: "[dvp] Valor invalido: informe um numero positivo (ate 2 casas)." });
         send("done", { success: false, target, label: t.label });
         res.end();
         return;
