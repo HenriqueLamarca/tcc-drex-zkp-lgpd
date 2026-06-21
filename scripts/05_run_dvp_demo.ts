@@ -84,8 +84,16 @@ async function main(): Promise<void> {
   // labels no mapeamento de commitments; quem paga o gas e' o admin. O
   // commitment Poseidon (hash do saldo) e' o mesmo independentemente do
   // endereco que o detem, entao a prova de referencia permanece valida.
-  const alice = ethers.Wallet.createRandom();
-  const bob = ethers.Wallet.createRandom();
+  // Em modo stateful (liquidacao interativa, DVP_STATEFUL=1) usamos enderecos
+  // FIXOS, para que o saldo persista on-chain entre transacoes sucessivas. No
+  // modo padrao, enderecos efemeros mantêm a demo sempre re-executavel.
+  const stateful = process.env.DVP_STATEFUL === "1";
+  const alice = stateful
+    ? new ethers.Wallet("0x0000000000000000000000000000000000000000000000000000000000000b01")
+    : ethers.Wallet.createRandom();
+  const bob = stateful
+    ? new ethers.Wallet("0x0000000000000000000000000000000000000000000000000000000000000b02")
+    : ethers.Wallet.createRandom();
 
   pretty.header(
     `Demo DvP - PoC DREX-ZKP-LGPD   (rede: ${network.name})`,

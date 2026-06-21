@@ -186,6 +186,13 @@ async function main(): Promise<void> {
   const outFile = path.join(outDir, `${network.name}.json`);
   fs.writeFileSync(outFile, JSON.stringify(record, null, 2));
 
+  // Contratos novos => o livro-razao da liquidacao interativa volta ao inicial.
+  try {
+    fs.rmSync(path.join(__dirname, "..", ".dvp_state"), { force: true });
+  } catch {
+    /* sem estado previo - ok */
+  }
+
   log({ event: "deploy_complete", file: outFile });
   log({ event: "summary", ...record });
 

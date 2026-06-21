@@ -1,15 +1,14 @@
 #!/usr/bin/env bash
 # =============================================================================
-# run_dvp_value.sh — DvP INTERATIVO (meio-termo entre o demo valido e o de rejeicao).
+# run_dvp_value.sh — DvP INTERATIVO com LIVRO-RAZAO (estado persistente).
 #
-# Saldos e partes sao FIXOS (Henrique=100, Tassio=50 DREX); o VALOR da transacao
-# e' escolhido na hora, via DVP_VALUE (ou 1o argumento). Aceita ate 2 casas
-# decimais (internamente em centavos). Regra (a mesma do circuito):
-#   - V > 0 e V <= saldo do pagador  -> gera a prova e EFETIVA.
-#   - caso contrario -> a regra de solvencia barra: operacao NAO efetivada.
+# Partes FIXAS (Henrique, Tassio); o VALOR e' escolhido na hora (DVP_VALUE ou 1o
+# argumento), com ate 2 casas decimais (internamente em centavos). Os SALDOS
+# PERSISTEM entre transacoes on-chain (ex.: 100 -> 70 -> 50...). O estado fica em
+# .dvp_state e e' zerado a cada deploy/viz:up (contratos novos = saldos iniciais).
 #
-# Sucesso e' sinalizado pelo arquivo-sentinela .make_step.ok que o 05 escreve;
-# na rejeicao por valor invalido, saimos antes (sem sentinela) -> o painel marca erro.
+# Regra (a mesma do circuito): V > 0 e V <= saldo atual do pagador -> EFETIVA;
+# caso contrario -> COMPROVANTE de operacao nao efetivada (sai sem o sentinela).
 # =============================================================================
 set -uo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -21,23 +20,10 @@ if [ -z "${BESU_PRIVATE_KEYS:-}" ]; then
   export BESU_PRIVATE_KEYS="$(grep -oE 'BESU_PRIVATE_KEYS[[:space:]]*:=[[:space:]]*\S+' Makefile 2>/dev/null | sed -E 's/.*:=[[:space:]]*//')"
 fi
 
-# Saldos fixos (em DREX). Internamente o circuito opera em CENTAVOS (inteiros),
-# o que permite valores fracionados de ate 2 casas. A exibicao volta a DREX (05
-# usa DVP_SCALE). Ex.: 100,00 DREX = 10000 centavos.
-S_A_DREX="100.00"
-S_B_DREX="50.00"
-S_A_C=10000
-S_B_C=5000
-V="${DVP_VALUE:-${1:-}}"
+STATE="$PROJECT_DIR/.dvp_state"
+SENTINEL="$PROJECT_DIR/.make_step.ok"
 
-echo "============================================================"
-echo "[dvp] Liquidacao interativa (entrega contra pagamento)"
-echo "[dvp]   Pagador:   Henrique Lamarca   (saldo $S_A_DREX DREX)"
-echo "[dvp]   Recebedor: Tassio Ferenzini   (saldo $S_B_DREX DREX)"
-echo "[dvp]   Valor solicitado: ${V:-<vazio>} DREX"
-echo "============================================================"
-
-# Converte "30.50" -> 3050 centavos sem depender de aritmetica de ponto flutuante.
+# "30.50" -> 3050 centavos (sem ponto flutuante);  3050 -> "30.50".
 to_cents() {
   local v="$1" int frac
   int="${v%%.*}"
@@ -45,12 +31,29 @@ to_cents() {
   frac="${frac}00"; frac="${frac:0:2}"
   echo $(( 10#${int:-0} * 100 + 10#$frac ))
 }
+fmt_drex() { printf '%d.%02d' $(( $1 / 100 )) $(( $1 % 100 )); }
 
-# ─── Validacao: numero com ate 2 casas, > 0 e <= saldo do pagador ─────────────
-# Em caso de recusa, emite um COMPROVANTE de operacao nao efetivada e sai sem o
-# sentinela -> o painel marca como nao efetivada.
+# ─── Le o estado atual (saldo em centavos + randomness on-chain). Inicial 100/50.
+if [ -f "$STATE" ]; then
+  read -r FROM_C FROM_R TO_C TO_R < "$STATE" 2>/dev/null || true
+fi
+: "${FROM_C:=10000}"; : "${FROM_R:=11111}"; : "${TO_C:=5000}"; : "${TO_R:=22222}"
+FROM_DREX=$(fmt_drex "$FROM_C")
+TO_DREX=$(fmt_drex "$TO_C")
+
+V="${DVP_VALUE:-${1:-}}"
+
+echo "============================================================"
+echo "[dvp] Liquidacao interativa (livro-razao com estado)"
+echo "[dvp]   Pagador:   Henrique Lamarca   (saldo atual $FROM_DREX DREX)"
+echo "[dvp]   Recebedor: Tassio Ferenzini   (saldo atual $TO_DREX DREX)"
+echo "[dvp]   Valor solicitado: ${V:-<vazio>} DREX"
+echo "============================================================"
+
+# ─── Validacao: numero com ate 2 casas, > 0 e <= saldo ATUAL do pagador ───────
+# Recusa -> COMPROVANTE de operacao nao efetivada e saida sem sentinela.
 reject() {  # $1 = motivo (invalid | insufficient)
-  DVP_FROM="Henrique Lamarca" DVP_TO="Tassio Ferenzini" DVP_SA="$S_A_DREX" \
+  DVP_FROM="Henrique Lamarca" DVP_TO="Tassio Ferenzini" DVP_SA="$FROM_DREX" \
     DVP_VALUE="$V" DVP_REASON="$1" node scripts/dvp_reject_card.cjs
   exit 1
 }
@@ -61,27 +64,41 @@ V_C=$(to_cents "$V")
 if [ "$V_C" -le 0 ]; then
   reject "invalid"
 fi
-if [ "$V_C" -gt "$S_A_C" ]; then
+if [ "$V_C" -gt "$FROM_C" ]; then
   reject "insufficient"
 fi
 
-# ─── Valor valido: gera a prova (em centavos) e efetiva on-chain ──────────────
+# ─── Valor valido: gera a prova (centavos) p/ o estado ATUAL e efetiva ────────
+NEW_FROM_C=$(( FROM_C - V_C ))
+NEW_TO_C=$(( TO_C + V_C ))
+R_A_NEW="$(date +%s)$RANDOM"     # randomness nova (vira a "antiga" da proxima tx)
+R_B_NEW="9$(date +%s)$RANDOM"
+
 echo ""
-echo "[dvp] Valor valido. Gerando prova Groth16 para V=$V DREX ($V_C centavos)..."
-if ! S_A=$S_A_C S_B=$S_B_C V=$V_C bash scripts/03_generate_test_fixtures.sh; then
+echo "[dvp] Valor valido. Gerando prova Groth16 (V=$V DREX)..."
+echo "[dvp]   Henrique: $FROM_DREX -> $(fmt_drex "$NEW_FROM_C") DREX   |   Tassio: $TO_DREX -> $(fmt_drex "$NEW_TO_C") DREX"
+if ! S_A=$FROM_C S_B=$TO_C V=$V_C \
+     R_A_OLD=$FROM_R R_B_OLD=$TO_R R_A_NEW=$R_A_NEW R_B_NEW=$R_B_NEW \
+     bash scripts/03_generate_test_fixtures.sh; then
   echo "[dvp] Falha ao gerar a prova para V=$V."
   exit 1
 fi
 
 echo ""
 echo "[dvp] Prova gerada. Efetivando a liquidacao on-chain..."
-export DVP_SCALE=100   # 05 exibe os valores em DREX (centavos / 100)
+rm -f "$SENTINEL"
+export DVP_SCALE=100 DVP_STATEFUL=1   # exibe em DREX e usa enderecos fixos (saldo persiste)
 npm run dvp:demo
 rc=$?
 
-# ─── Restaura fixtures padrao (cenario T1 inteiro) p/ manter o estado canonico ─
-echo ""
-echo "[dvp] Restaurando fixtures padrao..."
+# ─── Atualiza o livro-razao SE a transacao efetivou (sentinela presente) ──────
+if [ -f "$SENTINEL" ]; then
+  echo "$NEW_FROM_C $R_A_NEW $NEW_TO_C $R_B_NEW" > "$STATE"
+  echo ""
+  echo "[dvp] Saldos atualizados -> Henrique $(fmt_drex "$NEW_FROM_C") DREX | Tassio $(fmt_drex "$NEW_TO_C") DREX."
+fi
+
+# ─── Restaura fixtures padrao (cenario T1 inteiro) p/ make demo / testes ──────
 bash scripts/03_generate_test_fixtures.sh >/dev/null 2>&1 || true
 
 exit "$rc"

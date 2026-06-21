@@ -27,10 +27,10 @@ mkdir -p "$FIXTURES_DIR"
 S_A=${S_A:-100}
 S_B=${S_B:-50}
 V=${V:-30}
-R_A_OLD=11111
-R_B_OLD=22222
-R_A_NEW=33333
-R_B_NEW=44444
+R_A_OLD=${R_A_OLD:-11111}
+R_B_OLD=${R_B_OLD:-22222}
+R_A_NEW=${R_A_NEW:-33333}
+R_B_NEW=${R_B_NEW:-44444}
 S_A_NEW=$((S_A - V))   # 70
 S_B_NEW=$((S_B + V))   # 80
 

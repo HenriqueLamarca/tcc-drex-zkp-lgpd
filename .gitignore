@@ -73,3 +73,6 @@ Thumbs.db
 
 # Sentinela de sucesso das etapas do Makefile (Windows libuv workaround)
 .make_step.ok
+
+# Estado do livro-razao da liquidacao interativa (runtime; zera a cada deploy)
+.dvp_state
