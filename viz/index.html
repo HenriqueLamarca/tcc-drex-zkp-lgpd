@@ -85,6 +85,24 @@
   .field button:active:not(:disabled) { transform: translateY(1px); }
   .field button:disabled { opacity: .5; cursor: not-allowed; }
 
+  .ledger { display: flex; gap: 8px; margin: 2px 0 11px; }
+  .ledger .led {
+    flex: 1; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 9px; padding: 7px 10px;
+  }
+  .ledger .who { display: block; font-size: 10px; color: var(--muted); margin-bottom: 1px; letter-spacing: .01em; }
+  .ledger .bal { font-size: 16.5px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--accent); transition: color .3s; }
+  .ledger .unit { font-size: 10px; color: var(--muted); margin-left: 3px; }
+  .ledger .bal.flash { color: var(--green); }
+
+  .evid { margin-top: 14px; }
+  .evid > .h { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 8px; }
+  .evid .actions { gap: 8px; }
+  .action.ev-on { border-left-color: var(--accent); }
+  .action.ev-on .num { color: var(--accent); background: #eaf1fb; font-size: 13px; }
+  .action.ev-no { border-left-color: var(--amber); }
+  .action.ev-no .num { color: var(--amber); background: #fbf1e0; font-size: 14px; }
+
   .legend { font-size: 11.5px; color: var(--muted); line-height: 1.6; margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); }
   .legend .sw { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
   .legend .g { background: var(--green); } .legend .r { background: var(--red); }
@@ -150,12 +168,30 @@
 
     <div class="interactive">
       <div class="h"><span class="star">★</span> Liquidação interativa</div>
-      <p class="sub">Saldos fixos (Henrique <b>100</b> → Tassio <b>50</b>); você escolhe o valor da transação — aceita centavos (ex.: <b>30.50</b>).</p>
+      <p class="sub">Livro-razão real: os saldos <b>persistem</b> entre transações. Você escolhe o valor — aceita centavos (ex.: <b>30.50</b>).</p>
+      <div class="ledger" id="ledger">
+        <div class="led"><span class="who">Henrique Lamarca</span><span class="bal" id="balFrom">100.00</span><span class="unit">DREX</span></div>
+        <div class="led"><span class="who">Tassio Ferenzini</span><span class="bal" id="balTo">50.00</span><span class="unit">DREX</span></div>
+      </div>
       <div class="field">
         <input type="number" id="valorTx" min="0.01" step="0.01" value="40" aria-label="Valor da transação" />
         <button class="run" data-target="demo-value" data-label="Liquidação interativa">Liquidar valor</button>
       </div>
-      <p class="sub">Valor ≤ 100 → a prova é gerada e a liquidação <b>efetiva</b>. Acima de 100 → <b>recusada</b> pela regra de solvência.</p>
+      <p class="sub">Valor ≤ saldo do Henrique → a prova é gerada e a liquidação <b>efetiva</b> (saldos acima atualizam). Acima do saldo → <b>recusada</b> pela regra de solvência.</p>
+    </div>
+
+    <div class="evid">
+      <div class="h">Evidências</div>
+      <div class="actions">
+        <button class="action run ev-on" data-target="onchain" data-label="Estado on-chain">
+          <span class="num">◎</span>
+          <span class="meta"><span class="title">Ver o que está on-chain</span><span class="desc">Prova que a cadeia só guarda hashes — nenhum valor em claro</span></span>
+        </button>
+        <button class="action run ev-no" data-target="insolvent" data-label="Tentar gastar sem saldo">
+          <span class="num">⊘</span>
+          <span class="meta"><span class="title">Tentar gastar sem saldo</span><span class="desc">O circuito recusa — a prova nem chega a ser gerada</span></span>
+        </button>
+      </div>
     </div>
 
     <p class="legend">
@@ -186,6 +222,24 @@
   function setRunning(running) {
     buttons.forEach(b => b.disabled = running);
   }
+
+  // Placar do livro-razão: lê os saldos correntes da liquidação interativa.
+  function refreshLedger(flash) {
+    fetch("/state").then(r => r.json()).then(s => {
+      const f = document.getElementById("balFrom");
+      const t = document.getElementById("balTo");
+      const changed = f.textContent !== s.from || t.textContent !== s.to;
+      f.textContent = s.from;
+      t.textContent = s.to;
+      if (flash && changed) {
+        [f, t].forEach(el => {
+          el.classList.remove("flash"); void el.offsetWidth; el.classList.add("flash");
+          setTimeout(() => el.classList.remove("flash"), 900);
+        });
+      }
+    }).catch(() => {});
+  }
+  refreshLedger(false);
 
   function appendLine(line) {
     const div = document.createElement("div");
@@ -231,6 +285,10 @@
             badge.textContent = "✓ Operação inválida REJEITADA pela rede (segurança validada)";
           } else if (target === "demo-value") {
             badge.textContent = "✓ Liquidação efetivada com o valor escolhido";
+          } else if (target === "insolvent") {
+            badge.textContent = "✓ Circuito recusou a transferência insolvente (segurança validada)";
+          } else if (target === "onchain") {
+            badge.textContent = "✓ Inspeção concluída — on-chain só há hashes Poseidon, nenhum valor";
           } else {
             badge.textContent = "✓ Concluído com sucesso";
           }
@@ -238,10 +296,15 @@
           dot.className = "dot err";
           statusTxt.textContent = "Falhou";
           badge.className = "badge err";
-          badge.textContent = target === "demo-value"
-            ? "✗ Liquidação NÃO efetivada — valor recusado pela regra de solvência (veja o motivo no log)"
-            : "✗ A etapa falhou — verifique a rede Besu e o deploy";
+          if (target === "demo-value") {
+            badge.textContent = "✗ Liquidação NÃO efetivada — valor recusado pela regra de solvência (veja o motivo no log)";
+          } else if (target === "insolvent") {
+            badge.textContent = "✗ Não foi possível rodar a demonstração — verifique o Docker/ZoKrates";
+          } else {
+            badge.textContent = "✗ A etapa falhou — verifique a rede Besu e o deploy";
+          }
         }
+        refreshLedger(target === "demo-value");
       });
       es.onerror = () => {
         es.close(); setRunning(false);

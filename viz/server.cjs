@@ -17,7 +17,7 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..");
 const SENTINEL = path.join(ROOT, ".make_step.ok");
-const PORT = 4173;
+const PORT = Number(process.env.VIZ_PORT) || 4173;
 
 // As redes besu (deploy, demo, demo:fail) exigem BESU_PRIVATE_KEYS. O Makefile
 // exporta essa variavel; como aqui chamamos os scripts npm diretamente, nos
@@ -51,6 +51,8 @@ const TARGETS = {
   "demo-fail": { script: "dvp:demo:fail", label: "Liquidacao invalida (rejeicao)" },
   "demo-value": { interactive: true, label: "Liquidacao com valor escolhido" },
   benchmark: { script: "benchmark", label: "Benchmark" },
+  onchain: { script: "onchain", label: "Estado on-chain (privacidade)" },
+  insolvent: { bash: "scripts/circuit_insolvent.sh", label: "Tentativa sem saldo (circuito recusa)" },
 };
 
 // Caminho do Git Bash no Windows (mesmo do Makefile); fora dele, usa 'bash'.
@@ -67,6 +69,27 @@ const server = http.createServer((req, res) => {
   if (url.pathname === "/") {
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     fs.createReadStream(path.join(__dirname, "index.html")).pipe(res);
+    return;
+  }
+
+  // Saldos correntes do livro-razao da liquidacao interativa (placar do painel).
+  // Le .dvp_state ("FROM_C FROM_R TO_C TO_R" em centavos); sem arquivo => inicial.
+  if (url.pathname === "/state") {
+    let from = "100.00";
+    let to = "50.00";
+    try {
+      const raw = fs.readFileSync(path.join(ROOT, ".dvp_state"), "utf-8").trim();
+      const parts = raw.split(/\s+/);
+      const fmt = (c) => (Number(c) / 100).toFixed(2);
+      if (parts[0] && parts[2]) {
+        from = fmt(parts[0]);
+        to = fmt(parts[2]);
+      }
+    } catch (_e) {
+      /* sem estado salvo - usa o inicial 100/50 */
+    }
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
+    res.end(JSON.stringify({ from, to }));
     return;
   }
 
@@ -116,8 +139,15 @@ const server = http.createServer((req, res) => {
       env.DEMO_COMPACT = "1";
       cmd = `"${BASH_BIN}" scripts/run_dvp_value.sh`;
       send(null, { line: `$ DVP_VALUE=${value} bash scripts/run_dvp_value.sh` });
+    } else if (t.bash) {
+      // Alvos que rodam um script bash direto (ex.: recusa de solvencia no circuito).
+      env.DEMO_COMPACT = "1";
+      cmd = `"${BASH_BIN}" ${t.bash}`;
+      send(null, { line: `$ bash ${t.bash}` });
     } else {
-      if (target === "demo" || target === "demo-fail") env.DEMO_COMPACT = "1";
+      if (target === "demo" || target === "demo-fail" || target === "onchain") {
+        env.DEMO_COMPACT = "1";
+      }
       cmd = `npm run ${t.script}`;
       send(null, { line: `$ npm run ${t.script}` });
     }
@@ -215,15 +245,18 @@ server.listen(PORT, "127.0.0.1", () => {
   console.log("  (Ctrl+C para encerrar)");
   console.log("");
   // Abre o navegador automaticamente (best-effort, multiplataforma).
-  const opener =
-    process.platform === "win32"
-      ? `start "" ${urlStr}`
-      : process.platform === "darwin"
-        ? `open ${urlStr}`
-        : `xdg-open ${urlStr}`;
-  try {
-    spawn(opener, { shell: true, stdio: "ignore", detached: true });
-  } catch (_e) {
-    /* sem navegador automatico — usuario abre manualmente */
+  // VIZ_NO_OPEN=1 desativa (uso headless/automatizado).
+  if (process.env.VIZ_NO_OPEN !== "1") {
+    const opener =
+      process.platform === "win32"
+        ? `start "" ${urlStr}`
+        : process.platform === "darwin"
+          ? `open ${urlStr}`
+          : `xdg-open ${urlStr}`;
+    try {
+      spawn(opener, { shell: true, stdio: "ignore", detached: true });
+    } catch (_e) {
+      /* sem navegador automatico — usuario abre manualmente */
+    }
   }
 });

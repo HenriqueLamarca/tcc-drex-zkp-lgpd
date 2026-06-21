@@ -18,6 +18,7 @@
     "dvp:demo:local": "hardhat run scripts/05_run_dvp_demo.ts --network hardhat",
     "dvp:demo:fail": "hardhat run scripts/06_run_dvp_demo_fail.ts --network besu",
     "dvp:demo:fail:local": "hardhat run scripts/06_run_dvp_demo_fail.ts --network hardhat",
+    "onchain": "hardhat run scripts/show_onchain.ts --network besu",
     "benchmark": "hardhat run benchmark/benchmark.ts --network hardhat",
     "viz": "node viz/server.cjs",
     "lint:sol": "solhint contracts/**/*.sol",
