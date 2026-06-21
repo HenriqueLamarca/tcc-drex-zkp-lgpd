@@ -29,10 +29,17 @@ contract RegulatorViewer is AccessControl {
     // ─── Storage ────────────────────────────────────────────────────────────
 
     struct EncryptedRecord {
+        // Empacotamento de storage: from(20B) + blockNumber(uint48) +
+        // timestamp(uint48) preenchem exatamente 1 slot (32B); to(20B) ocupa
+        // outro. Antes eram 4 slots (2 enderecos + 2 uint256); agora 2, poupando
+        // ~2 SSTORE frios (~40k gas) por liquidacao. uint48 cobre numero de bloco
+        // e timestamp Unix por ~8,9 milhoes de anos — folga de sobra. A interface
+        // publica nao muda: getTxMetadata e accessEncryptedTx seguem expondo os
+        // mesmos valores (uint48 alarga para uint256 na leitura).
         address from;
+        uint48 blockNumber;
+        uint48 timestamp;
         address to;
-        uint256 blockNumber;
-        uint256 timestamp;
         bytes ciphertext; // ECIES(secp256k1, regulatorPubKey, payload)
     }
 
@@ -104,10 +111,10 @@ contract RegulatorViewer is AccessControl {
 
         _records[txId] = EncryptedRecord({
             from: from,
-            to: to,
-            blockNumber: block.number,
+            blockNumber: uint48(block.number),
             // solhint-disable-next-line not-rely-on-time
-            timestamp: block.timestamp,
+            timestamp: uint48(block.timestamp),
+            to: to,
             ciphertext: ciphertext
         });
 
