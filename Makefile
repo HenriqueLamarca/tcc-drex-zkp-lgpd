@@ -1,4 +1,4 @@
-.PHONY: all besu\:up besu\:down besu\:reset zkp\:setup compile deploy demo demo\:fail demo\:both viz viz\:up test benchmark lint help
+.PHONY: all besu\:up besu\:down besu\:reset zkp\:setup compile deploy demo demo\:fail demo\:both viz viz\:up test test\:all benchmark lint help
 
 ZOKRATES_IMAGE := zokrates/zokrates:0.8.8
 BESU_COMPOSE  := besu-network/docker-compose.yml
@@ -127,6 +127,22 @@ demo\:fail\:local:
 test:
 	@echo "[test] Executando suite completa..."
 	npm test
+
+# Roda TODAS as camadas de verificacao do projeto em um unico comando:
+# lint, typecheck, os 63 testes Hardhat, o smoke test do circuito (T1/T2/T3)
+# e o property-based testing do circuito. As duas ultimas exigem Docker.
+test\:all:
+	@echo "[test:all] 1/5 - Lint (Solidity + TypeScript)..."
+	npm run lint
+	@echo "[test:all] 2/5 - Typecheck (tsc)..."
+	npm run typecheck
+	@echo "[test:all] 3/5 - Suite Hardhat (63 testes)..."
+	npm test
+	@echo "[test:all] 4/5 - Smoke test do circuito (T1/T2/T3, via Docker)..."
+	$(BASH) scripts/02_test_zkp.sh
+	@echo "[test:all] 5/5 - Property-based testing do circuito (via Docker)..."
+	$(BASH) scripts/property_test_circuit.sh
+	@echo "[test:all] ✓ Todas as camadas verdes."
 
 test\:unit:
 	npm run test:unit
