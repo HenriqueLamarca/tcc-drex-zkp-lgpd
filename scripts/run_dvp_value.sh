@@ -23,6 +23,23 @@ fi
 STATE="$PROJECT_DIR/.dvp_state"
 SENTINEL="$PROJECT_DIR/.make_step.ok"
 
+# Restaura a fixture padrao (cenario T1) SE a fixture interativa chegou a ser
+# gerada. Instalada como trap para cobrir tambem interrupcoes (ex.: aba do
+# painel fechada no meio da execucao -> o servidor mata este processo); sem o
+# trap, "make demo"/testes ficariam com a fixture interativa em centavos e
+# exibiriam saldos crus (ex.: 6000 em vez de 100). A flag evita rodar a
+# regeneracao (~30s de Docker) nos caminhos em que a fixture nao foi tocada,
+# como a recusa por saldo insuficiente.
+FIXTURE_DIRTY=0
+restore_fixture() {
+  if [ "$FIXTURE_DIRTY" = "1" ]; then
+    FIXTURE_DIRTY=0
+    bash scripts/03_generate_test_fixtures.sh >/dev/null 2>&1 || true
+  fi
+}
+trap restore_fixture EXIT
+trap 'restore_fixture; exit 143' TERM INT
+
 # "30.50" -> 3050 centavos (sem ponto flutuante);  3050 -> "30.50".
 to_cents() {
   local v="$1" int frac
@@ -77,6 +94,7 @@ R_B_NEW="9$(date +%s)$RANDOM"
 echo ""
 echo "[dvp] Valor valido. Gerando prova Groth16 (V=$V DREX)..."
 echo "[dvp]   Henrique: $FROM_DREX -> $(fmt_drex "$NEW_FROM_C") DREX   |   Tassio: $TO_DREX -> $(fmt_drex "$NEW_TO_C") DREX"
+FIXTURE_DIRTY=1
 if ! S_A=$FROM_C S_B=$TO_C V=$V_C \
      R_A_OLD=$FROM_R R_B_OLD=$TO_R R_A_NEW=$R_A_NEW R_B_NEW=$R_B_NEW \
      bash scripts/03_generate_test_fixtures.sh; then
@@ -99,6 +117,7 @@ if [ -f "$SENTINEL" ]; then
 fi
 
 # ─── Restaura fixtures padrao (cenario T1 inteiro) p/ make demo / testes ──────
-bash scripts/03_generate_test_fixtures.sh >/dev/null 2>&1 || true
+# (o trap de EXIT cobre tambem interrupcoes; aqui e' o caminho normal)
+restore_fixture
 
 exit "$rc"
